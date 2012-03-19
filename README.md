@@ -40,7 +40,7 @@ object MyMapReduce extends scamr.MapReduceMain {
 }
 ```
 
-Note that any properties you set on the command line with `-Dproperty.name=property.value` will be parsed appropriately and set in your `baseHadoopConfiguration` before the `run()` method is called. For this reason, you should *probably* always use the `baseHadoopConfiguration` instead of creating a new one from scratch (that is, unless you really know what you're doing).
+Note that any properties you set on the command line with `-D property.name=property.value` will be parsed appropriately and set in your `baseHadoopConfiguration` before the `run()` method is called. For this reason, you should *probably* always use the `baseHadoopConfiguration` instead of creating a new one from scratch (that is, unless you really know what you're doing).
 
 ## Input Sources
 
@@ -52,7 +52,7 @@ val pipeline = MapReducePipeline.init(baseHadoopConfiguration) -->
                new InputOutput.TextFileSource(inputs)
 ```
 
-Notice that multiple input paths can be specified as arguments to the constructor of an InputOutput.TextFileSource object, but only a single Source object can be specified per peipeline. Joining inputs from multiple source types may be supported in a future version.
+Notice that multiple input paths can be specified as arguments to the constructor of an InputOutput.TextFileSource object, but only a single Source object can be specified per pipeline. Joining inputs from multiple source types may be supported in a future version.
 
 Once you've specified some input to a pipeline, you probably want to run it through one or more MapReduce jobs. Use the `-->` operator to direct the flow of data through your pipeline: from an input Source, into an MR job, between successive stages of your multi-job pipeline, and finally into an output Sink.
 
@@ -80,7 +80,7 @@ A map-only job can be specified by using `MapReduceJob` and supplying the mapper
 ... --> new MapOnlyJob(classOf[MyMapper], "My map-only job") --> ...
 ```
 
-Unless you are running a map-only job, compression of map outputs using the Snappy codec is enabled by default. This means that your cluster must have Snappy compression support installed (Cloudera's CDH3u1 or later does by default). You can disable this behavior completely by adding `-Dscamr.interstage.compression.codec=scamr.io.NullCompressionCodec` to your MR job command. Or, you can change the type of compression codec to something other than `SnappyCodec` by specifying a different codec class name.
+Unless you are running a map-only job, compression of map outputs using the Snappy codec is enabled by default. This means that your cluster must have Snappy compression support installed (Cloudera's CDH3u1 or later does by default). You can disable this behavior completely by adding `-D scamr.interstage.compression.codec=scamr.io.NullCompressionCodec` to your MR job command. Or, you can change the type of compression codec to something other than `SnappyCodec` by specifying a different codec class name.
 
 ## Defining Mappers / Reducers / Combiners
 
@@ -229,7 +229,7 @@ val pipeline = MapReducePipeline.init(baseHadoopConfiguration) -->
 
 Note that for all _N_, the output key/value types of stage _N_ must match the input key/value types of stage _N+1_.
 
-Chaining is currently implemented by writing the output of intermediate jobs to a randomly-named directory, using Snappy-compressed SequenceFiles. This means that the key and value output types of any intermediate job must implement `org.apache.hadoop.io.Writable`. It also means that your cluster must support Snappy compression (which it does if you are using Cloudera's CDH3u1 or later distribution). You can disable the compression of temporary inter-job files by passing the `-Dscamr.intermediate.compression.codec=scamr.io.NullCompressionCodec` argument to your job, or you can use a non-snappy `CompressionCodec` by passing in that codec's fully-qualified class name.
+Chaining is currently implemented by writing the output of intermediate jobs to a randomly-named directory, using Snappy-compressed SequenceFiles. This means that the key and value output types of any intermediate job must implement `org.apache.hadoop.io.Writable`. It also means that your cluster must support Snappy compression (which it does if you are using Cloudera's CDH3u1 or later distribution). You can disable the compression of temporary inter-job files by passing the `-D scamr.intermediate.compression.codec=scamr.io.NullCompressionCodec` argument to your job, or you can use a non-snappy `CompressionCodec` by passing in that codec's fully-qualified class name.
 
 ## Output Sinks
 
