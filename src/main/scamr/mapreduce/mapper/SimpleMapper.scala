@@ -3,6 +3,7 @@ package scamr.mapreduce.mapper
 import org.apache.hadoop.mapreduce.{Mapper, MapContext}
 import org.apache.hadoop.conf.Configuration
 import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
+import java.lang.reflect.InvocationTargetException
 
 abstract class SimpleMapper[K1, V1, K2, V2](override val context: MapContext[K1, V1, K2, V2])
     extends KeyValueEmitter[K2, V2] with CounterUpdater {
@@ -33,8 +34,18 @@ object SimpleMapper {
           "Cannot resolve concrete subclass of SimpleMapper! Make sure the '%s' property is set!".format(
             SimpleMapperClassProperty))
       }
+
       val constructor = mapperClass.getConstructor(classOf[MapContext[K1, V1, K2, V2]])
-      mapper = constructor.newInstance(context)
+      mapper = try {
+        constructor.newInstance(context)
+      } catch {
+        case e: InvocationTargetException =>
+          throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)
+        case e: InstantiationException =>
+          throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)
+        case e: IllegalAccessException =>
+          throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)
+      }
     }
 
     override def map(key: K1, value: V1, context: Mapper[K1, V1, K2, V2]#Context) {

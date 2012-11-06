@@ -4,6 +4,7 @@ import org.apache.hadoop.mapreduce.{ReduceContext, Reducer}
 
 import org.apache.hadoop.conf.Configuration
 import scamr.mapreduce.reducer.SimpleReducer
+import java.lang.reflect.InvocationTargetException
 
 abstract class SimpleCombiner[K, V](context: ReduceContext[K, V, K, V]) extends SimpleReducer[K, V, K, V](context);
 
@@ -27,8 +28,18 @@ object SimpleCombiner {
           "Cannot resolve concrete subclass of SimpleReducer! Make sure the '%s' property is set!".format(
             SimpleCombinerClassProperty))
       }
+
       val constructor = combinerClass.getConstructor(classOf[ReduceContext[K, V, K, V]])
-      combiner = constructor.newInstance(context)
+      combiner = try {
+        constructor.newInstance(context)
+      } catch {
+        case e: InvocationTargetException =>
+          throw new RuntimeException("Error creating SimpleCombiner instance: " + e.getMessage, e)
+        case e: InstantiationException =>
+          throw new RuntimeException("Error creating SimpleCombiner instance: " + e.getMessage, e)
+        case e: IllegalAccessException =>
+          throw new RuntimeException("Error creating SimpleCombiner instance: " + e.getMessage, e)
+      }
     }
 
     override def reduce(key: K, values: java.lang.Iterable[V], context: Reducer[K, V, K, V]#Context) {

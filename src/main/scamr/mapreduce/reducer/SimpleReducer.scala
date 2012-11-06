@@ -3,6 +3,7 @@ package scamr.mapreduce.reducer
 import org.apache.hadoop.mapreduce.{Reducer, ReduceContext}
 import org.apache.hadoop.conf.Configuration
 import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
+import java.lang.reflect.InvocationTargetException
 
 abstract class SimpleReducer[K1, V1, K2, V2](override val context: ReduceContext[K1, V1, K2, V2])
     extends KeyValueEmitter[K2, V2] with CounterUpdater {
@@ -45,8 +46,18 @@ object SimpleReducer {
           "Cannot resolve concrete subclass of SimpleReducer! Make sure the '%s' property is set!".format(
             SimpleReducerClassProperty))
       }
+
       val constructor = reducerClass.getConstructor(classOf[ReduceContext[K1, V1, K2, V2]])
-      reducer = constructor.newInstance(context)
+      reducer = try {
+        constructor.newInstance(context)
+      } catch {
+        case e: InvocationTargetException =>
+          throw new RuntimeException("Error creating SimpleReducer instance: " + e.getMessage, e)
+        case e: InstantiationException =>
+          throw new RuntimeException("Error creating SimpleReducer instance: " + e.getMessage, e)
+        case e: IllegalAccessException =>
+          throw new RuntimeException("Error creating SimpleReducer instance: " + e.getMessage, e)
+      }
     }
 
     override def reduce(key: K1, values: java.lang.Iterable[V1], context: Reducer[K1, V1, K2, V2]#Context) {
