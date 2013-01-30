@@ -6,7 +6,14 @@ import org.apache.hadoop.conf.{Configuration, Configured}
 abstract class MapReduceMain extends Configured with Tool {
   def main(args: Array[String]): Int = ToolRunner.run(this, args)
 
-  final def run(args: Array[String]): Int = run(getConf, args)
+  final def run(args: Array[String]): Int = {
+    val configuration = getConf
+    if (configuration.getBoolean("scamr.local.mode", false)) {
+      configuration.set("mapred.job.tracker", "local")
+      configuration.set("fs.default.name", "file:///")
+    }
+    run(configuration, args)
+  }
 
   // Subclasses must implement this method. ToolRunner will automagically parse common hadoop arguments from the input
   // args and store them in the configuration (i.e. "-D mapred.reduce.tasks=10", etc.)
