@@ -1,3 +1,5 @@
+import AssemblyKeys._
+
 organization := "ooyala.scamr"
 
 name := "scamr"
@@ -31,25 +33,26 @@ javaOptions += "-XX:MaxPermSize=1024m"
 
 javaOptions += "-Xmx2048m"
 
-seq(proguardSettings: _*)
+// Note: to run the scamr examples, build a "fat jar" with sbt assembly.
+// The run the examples with the jar at target/scamr-examples.jar
+//
+// To package scamr and use it as a library, use "sbt package". The library jar will be at
+// target/scala-<scala version/scamr_<scala version>-<scamr version>.jar
+//
+// To publish it to your own maven server, you'll need to have another .sbt file that defines the
+// maven server location and credentials.
+// TODO(ivmaykov): Publish ScaMR to some public maven repository.
 
-proguardOptions ++= Seq("-keep class scamr.** { *; }")
+// For the sbt-assembly plugin to be able to generate single JAR files for easy deploys
+seq(sbtassembly.Plugin.assemblySettings: _*)
 
-proguardLibraryJars <++= (update) map (_.select(module = moduleFilter(name = "servlet-api")))
+jarName in assembly := "scamr-examples.jar"
 
-minJarPath <<= target(_ / "scamr.jar")
-
-// TODO(cespare/ivmaykov): Look into excluding unnecessary stuff from the jar now that we're using proguard
-// NOTE(caleb): The generated jar is 8.8M, which is (a) already sufficiently small and (b) a little smaller
-// than the generated jar was previously (when we used sbt-assembly and excluded a bunch of stuff).
-
-// Enable the Scala Code Coverage Tool.  To run, do sbt coverage:test
-// seq(ScctPlugin.scctSettings: _*)
-
-// TODO(ivmaykov): Add unit tests!
-// libraryDependencies += "org.scalatest" % "scalatest_2.9.0" % "1.6.1"
-
-// libraryDependencies += "org.mockito" % "mockito-all" % "1.9.0-rc1"
+excludedJars in assembly <<= (fullClasspath in assembly) map { _ filter { cp =>
+    List("hadoop-core-0.20.2", "servlet-api", "scala-compiler", "guice-all", "junit", "mockito",
+         "jetty", "jsp-api", "hsqldb", "logback-").exists(cp.data.getName.startsWith(_))
+  }
+}
 
 //************** Maven publishing settings ***************************
 
