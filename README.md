@@ -256,12 +256,13 @@ or `false` if it failed (Note: this API is not yet stable, and may throw excepti
 
 # Building
 
-To build, you need sbt 0.11.X and scala 2.9.1.final. Once you've installed sbt, just run this from the
-top-level directory:
+First, you need sbt 0.12.1 and scala 2.9.1 or scala 2.10.0. To build scamr as a library and install it to your local ivy cache, run:
 
 ```bash
-sbt proguard
+sbt package && sbt publish-local
 ```
+
+To build a "fat jar" that you can use to run the examples, run `sbt assembly`. This will create a self-contained jar that can be run locally or on a hadoop cluster at `target/scamr-examples.jar`.
 
 TODO: Add a list of necessary SBT plugins etc.
 
@@ -270,13 +271,13 @@ TODO: Add a list of necessary SBT plugins etc.
 There are a few simple examples provided in `src/main/scamr/examples`. To run them, build the project, upload some text file(s) to HDFS, then run:
 
 ```bash
-hadoop jar target/scamr.jar scamr.examples.ExampleWordCountMapReduce <input path> <output dir>
+hadoop jar target/scamr-examples.jar scamr.examples.ExampleWordCountMapReduce <input path> <output dir>
 
-hadoop jar target/scamr.jar scamr.examples.ExampleSortedWordCountMapReduce <input path> <output dir>
+hadoop jar target/scamr-examples.jar scamr.examples.ExampleSortedWordCountMapReduce <input path> <output dir>
 
-hadoop jar target/scamr.jar scamr.examples.ExampleLambdaWordCountMapReduce <input path> <output dir>
+hadoop jar target/scamr-examples.jar scamr.examples.ExampleLambdaWordCountMapReduce <input path> <output dir>
 
-hadoop jar target/scamr.jar scamr.examples.ExampleMapOnlyJob <input path> <output dir>
+hadoop jar target/scamr-examples.jar scamr.examples.ExampleMapOnlyJob <input path> <output dir>
 ```
 
 # Testing
