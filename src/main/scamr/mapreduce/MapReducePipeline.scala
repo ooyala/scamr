@@ -124,11 +124,13 @@ object MapReducePipeline {
     }
 
     def ++(modifiers: Iterable[_ <: ConfOrJobModifier]): JobStage[K1, V1, K2, V2] = {
-      modifiers.foreach {
-        case confModifier: ConfModifier => confModifiers = confModifier :: confModifiers
-        case jobModifier: JobModifier => jobModifiers = jobModifier :: jobModifiers
-        case other @ _ => throw new IllegalArgumentException("Invalid modifier type: %s".format(
-          other.getClass.toString))
+      modifiers.foreach { modifier: ConfOrJobModifier =>
+        modifier match {
+          case confModifier: ConfModifier => confModifiers = confModifier :: confModifiers
+          case jobModifier: JobModifier => jobModifiers = jobModifier :: jobModifiers
+          case other @ _ => throw new IllegalArgumentException("Invalid modifier type: %s".format(
+            other.getClass.toString))
+        }
       }
       this
     }
