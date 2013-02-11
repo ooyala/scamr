@@ -15,8 +15,8 @@ unmanagedSourceDirectories in Test <<= Seq(baseDirectory(_ / "src" / "test")).jo
 
 unmanagedSourceDirectories in Compile <<= Seq( baseDirectory(_ / "src" / "main")).join
 
-// Compile against Cloudera's CDH3u1 distro by default
-libraryDependencies += "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u1"
+// Compile against Cloudera's CDH3u4 distro by default
+libraryDependencies += "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u4"
 
 // The above artifact needs access to Cloudera's maven repo
 resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
