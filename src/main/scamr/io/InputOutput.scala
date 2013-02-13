@@ -4,7 +4,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueTextInputFormat, TextInputFormat, FileInputFormat}
 import org.apache.hadoop.mapreduce.{OutputFormat, Job, InputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{SequenceFileOutputFormat, TextOutputFormat, FileOutputFormat}
-import org.apache.hadoop.io.compress.{SnappyCodec, CompressionCodec}
+import org.apache.hadoop.io.compress.{DefaultCodec, SnappyCodec, CompressionCodec}
 import org.apache.hadoop.io.{Writable, Text, LongWritable}
 import org.apache.hadoop.conf.Configuration
 
@@ -98,10 +98,21 @@ object InputOutput {
       // run faster and use less disk space in basically every case, with no negative side effects.
       // However, only do so if the snappy native libraries are loaded.
       val conf = producerJob.getConfiguration
-      val codecClass = conf.getClass("scamr.intermediate.compression.codec", classOf[SnappyCodec],
-        classOf[CompressionCodec])
-      if (codecClass != classOf[NullCompressionCodec] &&
-         (codecClass != classOf[SnappyCodec] || SnappyCodec.isNativeSnappyLoaded(conf))) {
+      val defaultCodec = if (SnappyCodec.isNativeSnappyLoaded(conf)) {
+        // Prefer the SnappyCodec if the Snappy native libraries are loaded ...
+        classOf[SnappyCodec]
+      } else {
+        // ... else, prefer LzoCodec if the GPL'ed hadoop-gpl-compression library is installed on our cluster,
+        // and fall back to DefaultCodec if neither of Snappy or Lzo is available.
+        Option(conf.getClass("io.compression.codec.lzo.class", null, classOf[CompressionCodec])) match {
+          case Some(lzoCodec) => lzoCodec
+          case None => classOf[DefaultCodec]
+        }
+      }
+      // Allow the user to overwrite the codec we actually use on the command line
+      val codecClass = conf.getClass("scamr.interstage.compression.codec", defaultCodec, classOf[CompressionCodec])
+
+      if (codecClass != classOf[NullCompressionCodec]) {
         conf.setBoolean("mapred.output.compress", true)
         conf.set("mapred.output.compression.type", "BLOCK")
         conf.setClass("mapred.output.compression.codec", codecClass, classOf[CompressionCodec])

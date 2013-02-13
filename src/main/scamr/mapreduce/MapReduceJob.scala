@@ -1,7 +1,7 @@
 package scamr.mapreduce
 
 import org.apache.hadoop.mapreduce.{Reducer, Mapper, Job}
-import org.apache.hadoop.io.compress.{CompressionCodec, SnappyCodec}
+import org.apache.hadoop.io.compress.{DefaultCodec, CompressionCodec, SnappyCodec}
 import scamr.conf.{ConfModifier, LambdaConfModifier}
 import scamr.mapreduce.mapper.MapperDef
 import scamr.mapreduce.reducer.ReducerDef
@@ -31,18 +31,27 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
   require(name != null && !name.isEmpty, "Not allowed: null or empty job name!")
 
   val confModifiers = if (reducerClass != None) {
-    LambdaConfModifier {
-      conf => {
-        val codecClass = conf.getClass("scamr.interstage.compression.codec", classOf[SnappyCodec],
-          classOf[CompressionCodec])
-        if (codecClass != classOf[NullCompressionCodec] &&
-          (codecClass != classOf[SnappyCodec] || SnappyCodec.isNativeSnappyLoaded(conf))) {
-          conf.setBoolean("mapred.compress.map.output", true)
-          conf.set("mapred.map.output.compression.type", "BLOCK")
-          conf.setClass("mapred.map.output.compression.codec", codecClass, classOf[CompressionCodec])
-        } else {
-          conf.setBoolean("mapred.compress.map.output", false)
+    LambdaConfModifier { conf =>
+      val defaultCodec = if (SnappyCodec.isNativeSnappyLoaded(conf)) {
+        // Prefer the SnappyCodec if the Snappy native libraries are loaded ...
+        classOf[SnappyCodec]
+      } else {
+        // ... else, prefer LzoCodec if the GPL'ed hadoop-gpl-compression library is installed on our cluster,
+        // and fall back to DefaultCodec if neither of Snappy or Lzo is available.
+        Option(conf.getClass("io.compression.codec.lzo.class", null, classOf[CompressionCodec])) match {
+          case Some(lzoCodec) => lzoCodec
+          case None => classOf[DefaultCodec]
         }
+      }
+      // Allow the user to overwrite the codec we actually use on the command line
+      val codecClass = conf.getClass("scamr.intermediate.compression.codec", defaultCodec, classOf[CompressionCodec])
+
+      if (codecClass != classOf[NullCompressionCodec]) {
+        conf.setBoolean("mapred.compress.map.output", true)
+        conf.set("mapred.map.output.compression.type", "BLOCK")
+        conf.setClass("mapred.map.output.compression.codec", codecClass, classOf[CompressionCodec])
+      } else {
+        conf.setBoolean("mapred.compress.map.output", false)
       }
     } :: confMods
   } else {
