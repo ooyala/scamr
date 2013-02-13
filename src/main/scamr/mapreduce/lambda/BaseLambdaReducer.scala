@@ -8,12 +8,12 @@ import scamr.io.SerializableFunction2
 abstract class BaseLambdaReducer[K1, V1, K2, V2] extends Reducer[K1, V1, K2, V2] {
   import scala.collection.JavaConversions
 
-  type FunctionType = Function2[Iterator[(K1, Iterator[V1])], LambdaReduceContext[K1, V1, K2, V2], Iterator[(K2, V2)]]
+  type FunctionType = Function2[Iterator[(K1, Iterator[V1])], LambdaReduceContext, Iterator[(K2, V2)]]
 
   val functionPropertyName: String
 
   override def run(context: Reducer[K1, V1, K2, V2]#Context) {
-    super.setup(context)
+    super.setup(context.asInstanceOf[this.type#Context])
     val conf = context.getConfiguration
     val lambda: FunctionType = BaseLambdaReducer.getLambdaFunction[K1, V1, K2, V2](conf, functionPropertyName)
 
@@ -27,7 +27,7 @@ abstract class BaseLambdaReducer[K1, V1, K2, V2] extends Reducer[K1, V1, K2, V2]
     for ((outKey, outValue) <- lambda(iter, lambdaReduceContext)) {
       context.write(outKey, outValue)
     }
-    super.cleanup(context)
+    super.cleanup(context.asInstanceOf[this.type#Context])
   }
 }
 

@@ -7,10 +7,10 @@ import scamr.mapreduce.lambda.LambdaMapContext
 
 // Note: Much of this class was copied from Jonathan Clark's Scadoop project (https://github.com/jhclark/scadoop)
 class LambdaMapper[K1, V1, K2, V2] extends Mapper[K1, V1, K2, V2] {
-  type FunctionType = Function2[Iterator[(K1, V1)], LambdaMapContext[K1, V1, K2, V2], Iterator[(K2, V2)]]
+  type FunctionType = Function2[Iterator[(K1, V1)], LambdaMapContext, Iterator[(K2, V2)]]
 
   override def run(context: Mapper[K1, V1, K2, V2]#Context) {
-    super.setup(context)
+    super.setup(context.asInstanceOf[this.type#Context])
     val conf = context.getConfiguration
     val lambda: FunctionType = LambdaMapper.getLambdaFunction[K1, V1, K2, V2](conf)
 
@@ -24,7 +24,7 @@ class LambdaMapper[K1, V1, K2, V2] extends Mapper[K1, V1, K2, V2] {
     for ((outKey, outValue) <- lambda(iter, lambdaMapContext)) {
       context.write(outKey, outValue)
     }
-    super.cleanup(context)
+    super.cleanup(context.asInstanceOf[this.type#Context])
   }
 }
 

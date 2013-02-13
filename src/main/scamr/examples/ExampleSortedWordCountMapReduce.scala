@@ -10,6 +10,7 @@ import scamr.mapreduce.mapper.SimpleMapper
 import scamr.mapreduce.reducer.SimpleReducer
 import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
 import scamr.conf.{LambdaJobModifier, ConfigureSpeculativeExecution}
+import org.apache.hadoop.mapreduce.{ReduceContext, MapContext}
 
 class LongAndTextWritableComparable(tuple: (LongWritable, Text))
     extends Tuple2WritableComparable[LongWritable, Text](tuple) {
@@ -17,13 +18,13 @@ class LongAndTextWritableComparable(tuple: (LongWritable, Text))
   def this() = this((new LongWritable, new Text))
 }
 
-class CombineCountAndWordIntoTupleMapper(context: CombineCountAndWordIntoTupleMapper#ContextType)
+class CombineCountAndWordIntoTupleMapper(context: MapContext[_, _, _, _])
     extends SimpleMapper[Text, LongWritable, LongAndTextWritableComparable, NullWritable](context) {
   override def map(word: Text, count: LongWritable) =
     emit(new LongAndTextWritableComparable(count, word), NullWritable.get)
 }
 
-class OutputSortedCountsReducer(context: OutputSortedCountsReducer#ContextType)
+class OutputSortedCountsReducer(context: ReduceContext[_, _, _, _])
     extends SimpleReducer[LongAndTextWritableComparable, NullWritable, Text, LongWritable](context) {
   override def reduce(key: LongAndTextWritableComparable, ignored: Iterator[NullWritable]) =
     emit(key._2, key._1)

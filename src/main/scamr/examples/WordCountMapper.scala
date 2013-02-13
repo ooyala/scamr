@@ -4,8 +4,7 @@ import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapreduce.MapContext
 import scamr.mapreduce.lib.TextInputMapper
 
-class WordCountMapper(context: MapContext[LongWritable, Text, Text, LongWritable])
-    extends TextInputMapper[Text, LongWritable](context) {
+class WordCountMapper(context: MapContext[_, _, _, _]) extends TextInputMapper[Text, LongWritable](context) {
   private val One = new LongWritable(1L)
 
   override def map(offset: LongWritable, line: Text) =

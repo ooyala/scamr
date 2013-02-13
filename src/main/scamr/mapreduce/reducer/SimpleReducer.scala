@@ -5,9 +5,10 @@ import org.apache.hadoop.conf.Configuration
 import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
 import java.lang.reflect.InvocationTargetException
 
-abstract class SimpleReducer[K1, V1, K2, V2](override val context: ReduceContext[K1, V1, K2, V2])
+abstract class SimpleReducer[K1, V1, K2, V2](private val _context: ReduceContext[_, _, _, _])
     extends KeyValueEmitter[K2, V2] with CounterUpdater {
   type ContextType = ReduceContext[K1, V1, K2, V2]
+  override val context = _context.asInstanceOf[ReduceContext[K1, V1, K2, V2]]
 
   // WARNING: Trying to do anything other than a foreach() loop with values() might not do what you want,
   // because Hadoop likely reuses a single instance of your Writable object and reads successive values

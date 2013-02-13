@@ -4,7 +4,7 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext
 
 // A wrapper around Hadoop's TaskInputOutputContext that only exposes limited functionality.
 // Specifically, it doesn't allow calls to any mutating functions except for updateCounter(), setStatus(), and progress().
-class BaseLambdaContext[K1, V1, K2, V2](context: TaskInputOutputContext[K1, V1, K2, V2]) {
+class BaseLambdaContext(context: TaskInputOutputContext[_, _, _, _]) {
   // Side-effect-free methods
   def getTaskAttemptId = context.getTaskAttemptID
   def getStatus = context.getStatus

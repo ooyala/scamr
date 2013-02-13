@@ -5,8 +5,9 @@ import org.apache.hadoop.conf.Configuration
 import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
 import java.lang.reflect.InvocationTargetException
 
-abstract class SimpleMapper[K1, V1, K2, V2](override val context: MapContext[K1, V1, K2, V2])
+abstract class SimpleMapper[K1, V1, K2, V2](private val _context: MapContext[_, _, _, _])
     extends KeyValueEmitter[K2, V2] with CounterUpdater {
+  override val context = _context.asInstanceOf[MapContext[K1, V1, K2, V2]]
   type ContextType = MapContext[K1, V1, K2, V2]
 
   def map(key: K1, value: V1)

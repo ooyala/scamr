@@ -6,7 +6,7 @@ import org.apache.hadoop.conf.Configuration
 import scamr.mapreduce.reducer.SimpleReducer
 import java.lang.reflect.InvocationTargetException
 
-abstract class SimpleCombiner[K, V](context: ReduceContext[K, V, K, V]) extends SimpleReducer[K, V, K, V](context);
+abstract class SimpleCombiner[K, V](context: ReduceContext[_, _, _, _]) extends SimpleReducer[K, V, K, V](context);
 
 object SimpleCombiner {
   val SimpleCombinerClassProperty = "scamr.simple.combiner.class"

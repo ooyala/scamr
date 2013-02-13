@@ -13,18 +13,17 @@ import scamr.mapreduce.lambda.{LambdaReduceContext, LambdaMapContext}
 object ExampleLambdaWordCountMapReduce extends MapReduceMain {
   private val One = new LongWritable(1L)
 
-  def map(input: Iterator[(LongWritable, Text)],
-          context: LambdaMapContext[LongWritable, Text, Text, LongWritable]): Iterator[(Text, LongWritable)] = for {
+  def map(input: Iterator[(LongWritable, Text)], context: LambdaMapContext): Iterator[(Text, LongWritable)] = for {
       (offset, line) <- input
       word <- line.toString.split("\\s+").filterNot { _.isEmpty }.toIterator
     } yield (new Text(word), One)
 
-  def reduce(input: Iterator[(Text, Iterator[LongWritable])],
-             context: LambdaReduceContext[Text, LongWritable, Text, LongWritable]): Iterator[(Text, LongWritable)] = for {
+  def reduce(input: Iterator[(Text, Iterator[LongWritable])], context: LambdaReduceContext):
+    Iterator[(Text, LongWritable)] = for {
       (word, counts) <- input
     } yield (word, new LongWritable(counts.foldLeft(0L) { (a, b) => a + b.get }))
 
-  override def run(conf: Configuration, args: Array[String]) : Int = {
+  override def run(conf: Configuration, args: Array[String]): Int = {
     val inputDirs = List(args(0))
     val outputDir = args(1)
 
