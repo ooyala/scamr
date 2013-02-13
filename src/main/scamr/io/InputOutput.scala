@@ -1,11 +1,12 @@
 package scamr.io
 
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueTextInputFormat, TextInputFormat, FileInputFormat}
 import org.apache.hadoop.mapreduce.{OutputFormat, Job, InputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{SequenceFileOutputFormat, TextOutputFormat, FileOutputFormat}
 import org.apache.hadoop.io.compress.{SnappyCodec, CompressionCodec}
 import org.apache.hadoop.io.{Writable, Text, LongWritable}
+import org.apache.hadoop.conf.Configuration
 
 object InputOutput {
   // A trait for input sources
@@ -112,6 +113,14 @@ object InputOutput {
     override def configureInput(consumerJob: Job) {
       super.configureInput(consumerJob)
       FileInputFormat.addInputPath(consumerJob, new Path(workingDir))
+    }
+
+    def cleanupWorkingDir(conf: Configuration) {
+      if (!conf.getBoolean("scamr.always.keep.interstage.files", false)) {
+        val path = new Path(workingDir)
+        val fs = FileSystem.get(path.toUri, conf)
+        fs.delete(path, true)
+      }
     }
   }
 

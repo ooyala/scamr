@@ -9,6 +9,7 @@ import org.joda.time.format.DateTimeFormat
 
 import scamr.io.InputOutput
 import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
+import scamr.io.InputOutput.FileLink
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
   def execute(): Boolean = pipeline.execute()
@@ -135,13 +136,19 @@ object MapReducePipeline {
     }
 
     override def execute(): Boolean = {
-      val result = prev.execute()
+      var result = prev.execute()
       // TODO(ivmaykov): Throw an exception?
       if (!result)
         return false
 
       val job = createAndConfigureJob
-      job.waitForCompletion(true)
+      result = job.waitForCompletion(true)
+      if (result && prev.isInstanceOf[LinkStage[_, _]]) {
+        // If the job succeeded and the previous stage was a LinkStage, delete the working directory with the
+        // intermediate files
+        prev.asInstanceOf[LinkStage[_, _]].cleanupWorkingDir(job.getConfiguration)
+      }
+      return result
     }
 
     // Configures this stage
@@ -161,18 +168,13 @@ object MapReducePipeline {
     // Generates a random working directory name using the current time, user name, job name, and a
     // random number as components.
     def randomWorkingDir(prefix: String): String = {
-      val now = new DateTime(System.currentTimeMillis, DateTimeZone.UTC)
-      val formatter = DateTimeFormat.forPattern("YYYY-MM-dd-HH-mm-ss")
-      val nowString = formatter.print(now)
-      val userName = System.getenv("USER")
+      val now = DateTimeFormat.forPattern("YYYY-MM-dd-HH-mm-ss").print(new DateTime(System.currentTimeMillis,
+        DateTimeZone.UTC))
       val randomLong = random.nextLong.abs.toString
       // Extract a job name component from the full job name by replacing all whitespace with underscores
       // and all non-word characters (a-zA-Z_0-9) with empty strings
       val jobName = scamrJob.name.replaceAll("\\s+", "_").replaceAll("\\W+", "")
-      var path = new Path(prefix, userName)
-      path = new Path(path, jobName)
-      path = new Path(path, "%s-%s".format(nowString, randomLong))
-      path.toString.toLowerCase
+      new Path(prefix, (System.getenv("USER") + "-" + now + "-" + jobName + "-" + randomLong).toLowerCase).toString
     }
   }
 
@@ -194,6 +196,8 @@ object MapReducePipeline {
 
     // Only JobStages really execute, everyone else just recurses to the previous stage in the chain
     override def execute() = prev.execute()
+
+    def cleanupWorkingDir(conf: Configuration) { link.cleanupWorkingDir(conf) }
   }
 
   class OutputStage[K, V](override val prev: Stage[_, _, K, V], override val sink: InputOutput.Sink[K, V])
