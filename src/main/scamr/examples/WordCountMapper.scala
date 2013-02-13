@@ -1,10 +1,11 @@
 package scamr.examples
 
-import scamr.mapreduce.mapper.SimpleMapper
 import org.apache.hadoop.io.{LongWritable, Text}
+import org.apache.hadoop.mapreduce.MapContext
+import scamr.mapreduce.lib.TextInputMapper
 
-class WordCountMapper(context: WordCountMapper#ContextType)
-    extends SimpleMapper[LongWritable, Text, Text, LongWritable](context) {
+class WordCountMapper(context: MapContext[LongWritable, Text, Text, LongWritable])
+    extends TextInputMapper[Text, LongWritable](context) {
   private val One = new LongWritable(1L)
 
   override def map(offset: LongWritable, line: Text) =
