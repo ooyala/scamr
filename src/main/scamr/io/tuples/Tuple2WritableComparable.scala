@@ -24,9 +24,7 @@ abstract class Tuple2WritableComparable[A <: Writable with Comparable[_], B <: W
 
   override def compareTo(that: Tuple2WritableComparable[A, B]): Int = {
     val cmp1 = this.tuple._1.asInstanceOf[Comparable[A]].compareTo(that.tuple._1)
-    if (cmp1 != 0)
-      return cmp1
-    return this.tuple._2.asInstanceOf[Comparable[B]].compareTo(that.tuple._2)
+    return if (cmp1 != 0) cmp1 else this.tuple._2.asInstanceOf[Comparable[B]].compareTo(that.tuple._2)
   }
 
   override def hashCode(): Int = tuple.hashCode

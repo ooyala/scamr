@@ -15,7 +15,7 @@ object ExampleLambdaWordCountMapReduce extends MapReduceMain {
 
   def map(input: Iterator[(LongWritable, Text)],
           context: LambdaMapContext[LongWritable, Text, Text, LongWritable]): Iterator[(Text, LongWritable)] = for {
-      (offset, line) <- input;
+      (offset, line) <- input
       word <- line.toString.split("\\s+").filterNot { _.isEmpty }.toIterator
     } yield (new Text(word), One)
 

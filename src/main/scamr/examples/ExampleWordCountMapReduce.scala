@@ -9,7 +9,7 @@ import scamr.mapreduce.{MapReduceJob, MapReducePipeline}
 import scamr.conf.LambdaJobModifier
 
 object ExampleWordCountMapReduce extends MapReduceMain {
-  override def run(conf: Configuration, args: Array[String]) : Int = {
+  override def run(conf: Configuration, args: Array[String]): Int = {
     val inputDirs = List(args(0))
     val outputDir = args(1)
     val pipeline = MapReducePipeline.init(conf) -->  // hint: start by adding a data source with -->

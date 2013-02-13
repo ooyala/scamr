@@ -36,7 +36,7 @@ class OutputSortedCountsReducer(context: OutputSortedCountsReducer#ContextType)
 //   gives us the sort order we want on the reducer for free.
 // Stage 2 reducer breaks the tuple back into a word and count and outputs them.
 object ExampleSortedWordCountMapReduce extends MapReduceMain {
-  override def run(conf: Configuration, args: Array[String]) : Int = {
+  override def run(conf: Configuration, args: Array[String]): Int = {
     val inputDirs = List(args(0))
     val outputDir = args(1)
     val pipeline = MapReducePipeline.init(conf) -->  // hint: start by adding a data source with -->

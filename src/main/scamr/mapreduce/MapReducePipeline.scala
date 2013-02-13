@@ -128,8 +128,7 @@ object MapReducePipeline {
         modifier match {
           case confModifier: ConfModifier => confModifiers = confModifier :: confModifiers
           case jobModifier: JobModifier => jobModifiers = jobModifier :: jobModifiers
-          case other @ _ => throw new IllegalArgumentException("Invalid modifier type: %s".format(
-            other.getClass.toString))
+          case _ => throw new IllegalArgumentException("Invalid modifier class: " + modifier.getClass.toString)
         }
       }
       this

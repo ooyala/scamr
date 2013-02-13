@@ -18,7 +18,7 @@ import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
 object ExampleWordCountWithHadoopReducer extends MapReduceMain {
   class HadoopWordCountReducer extends LongSumReducer[Text];
 
-  override def run(conf: Configuration, args: Array[String]) : Int = {
+  override def run(conf: Configuration, args: Array[String]): Int = {
     val inputDirs = List(args(0))
     val outputDir = args(1)
     val pipeline = MapReducePipeline.init(conf) -->  // hint: start by adding a data source with -->
