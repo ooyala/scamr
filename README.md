@@ -63,9 +63,9 @@ A MapReduce job is specified by instantiating a `MapReduceJob` or `MapOnlyJob` o
 Let's see a simple example, which we will take apart in the next few sections:
 
 ```scala
-class MyMapper(context: MyMapper#ContextType) extends SimpleMapper[K1, V1, K2, V2](context) { ... };
-class MyCombiner(context: MyCombiner#ContextType) extends SimpleCombiner[K2, V2](context) { ... };
-class MyReducer(context: MyReducer#ContextType) extends SimpleReducer[K2, V2, K3, V3](context) { ... };
+class MyMapper(context: MapContext[_,_,_,_]) extends SimpleMapper[K1, V1, K2, V2](context) { ... };
+class MyCombiner(context: ReduceContext[_,_,_,_]) extends SimpleCombiner[K2, V2](context) { ... };
+class MyReducer(context: ReduceContext[_,_,_,_]) extends SimpleReducer[K2, V2, K3, V3](context) { ... };
 
 val inputs = List("/logs.production/2011/01/01/*", "/logs.production/2011/01/02/*")
 val pipeline = MapReducePipeline.init(baseHadoopConfiguration) -->
@@ -134,7 +134,7 @@ ScaMR also provides an alternative API for writing a Mapper / Reducer / Combiner
 Obligatory example:
 
 ```scala
-class TextIdentityMapper(context: TextIdentityMapper#ContextType)
+class TextIdentityMapper(context: MapContext[_,_,_,_])
     extends SimpleMapper[Text, Text, Text, Text](context) {
   val conf = context.getConfiguration
   val inputSplit = context.getInputSplit
