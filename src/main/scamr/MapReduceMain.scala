@@ -4,9 +4,12 @@ import org.apache.hadoop.util.{ToolRunner, Tool}
 import org.apache.hadoop.conf.{Configuration, Configured}
 
 abstract class MapReduceMain extends Configured with Tool {
-  def main(args: Array[String]): Int = ToolRunner.run(this, args)
+  def main(args: Array[String]): Unit = ToolRunner.run(this, args) match {
+    case errorCode if (errorCode != 0) => throw new RuntimeException("Failed with exit code " + errorCode)
+    case _ =>
+  }
 
-  final def run(args: Array[String]): Int = {
+  override final def run(args: Array[String]): Int = {
     val configuration = getConf
     if (configuration.getBoolean("scamr.local.mode", false)) {
       configuration.set("mapred.job.tracker", "local")
