@@ -1,15 +1,9 @@
 package scamr.mapreduce
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
-
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.DateTimeFormat
-
-import scamr.io.InputOutput
+import scamr.io.{InputOutputUtils, InputOutput}
 import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
-import scamr.io.InputOutput.FileLink
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
   def execute(): Boolean = pipeline.execute()
@@ -90,12 +84,11 @@ object MapReducePipeline {
                                  (implicit val k2m: Manifest[K2], v2m: Manifest[V2])
       extends Stage[K1, V1, K2, V2] with JobLike[K1, V1, K2, V2] {
     override val baseConfiguration = prev.baseConfiguration
-    private val random = new scala.util.Random()
 
     protected var confModifiers: List[ConfModifier] = List()
     protected var jobModifiers: List[JobModifier] = List()
 
-    val workingDir: String = randomWorkingDir("tmp")
+    val workingDir: String = randomWorkingDir("tmp", scamrJob.name)
 
     def -->(sink: InputOutput.Sink[K2, V2]): MapReducePipeline = {
       val nextStage = new OutputStage[K2, V2](this, sink)
@@ -167,15 +160,8 @@ object MapReducePipeline {
 
     // Generates a random working directory name using the current time, user name, job name, and a
     // random number as components.
-    def randomWorkingDir(prefix: String): String = {
-      val now = DateTimeFormat.forPattern("YYYY-MM-dd-HH-mm-ss").print(new DateTime(System.currentTimeMillis,
-        DateTimeZone.UTC))
-      val randomLong = random.nextLong.abs.toString
-      // Extract a job name component from the full job name by replacing all whitespace with underscores
-      // and all non-word characters (a-zA-Z_0-9) with empty strings
-      val jobName = scamrJob.name.replaceAll("\\s+", "_").replaceAll("\\W+", "")
-      new Path(prefix, (System.getenv("USER") + "-" + now + "-" + jobName + "-" + randomLong).toLowerCase).toString
-    }
+    def randomWorkingDir(prefix: String, jobName: String): String =
+      InputOutputUtils.randomWorkingDir(prefix, jobName)
   }
 
   class LinkStage[K, V](override val prev: Stage[_, _, K, V], val workingDir: String)
