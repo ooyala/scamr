@@ -24,18 +24,18 @@ object InputOutput {
 
     override def configureInput(job: Job) {
       super.configureInput(job)
-      inputDirs map { new Path(_) } foreach { FileInputFormat.addInputPath(job, _) }
+      inputDirs.map { new Path(_) }.foreach { FileInputFormat.addInputPath(job, _) }
     }
   }
 
   class TextFileSource(inputDirs: Iterable[String])
-      extends FileSource[LongWritable, Text](classOf[TextInputFormat], inputDirs);
+      extends FileSource[LongWritable, Text](classOf[TextInputFormat], inputDirs)
 
   class KeyValueTextFileSource(inputDirs: Iterable[String])
-      extends FileSource[Text, Text](classOf[KeyValueTextInputFormat], inputDirs);
+      extends FileSource[Text, Text](classOf[KeyValueTextInputFormat], inputDirs)
 
   class SequenceFileSource[K, V](inputDirs: Iterable[String])
-      extends FileSource[K, V](classOf[SequenceFileInputFormat[K, V]], inputDirs);
+      extends FileSource[K, V](classOf[SequenceFileInputFormat[K, V]], inputDirs)
 
   // A trait for output sinks
   trait Sink[K, V] {
@@ -74,7 +74,7 @@ object InputOutput {
 
   // A trait for an IO object that's both a source and a sink. This is used to "glue" multi-stage MR
   // pipelines together.
-  trait Link[K, V] extends Source[K, V] with Sink[K, V];
+  trait Link[K, V] extends Source[K, V] with Sink[K, V]
 
   abstract class FileLink[K, V](override val outputFormatClass: Class[_ <: OutputFormat[K, V]],
                                 override val inputFormatClass: Class[_ <: InputFormat[K, V]],
