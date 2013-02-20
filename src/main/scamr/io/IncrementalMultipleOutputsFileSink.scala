@@ -93,14 +93,14 @@ class IncrementalMultipleOutputsFileSink[K, V](val jobName: String, baseOutputDi
       // Find all source files and directories in workingDir.
       val (sourceDirs, sourceFiles) = InputOutputUtils.listRecursive(workingDir, fs).partition { _.isDir }
 
-      // Find the deepest level of directories in the output. We can use FileSystem.mkdirs to recursively create the
-      // same paths in outputDir
-      val allSourceDirectoriesByDepth = sourceDirs.groupBy { _.getPath.depth }
-      val deepestLevelSourceDirectories = allSourceDirectoriesByDepth(allSourceDirectoriesByDepth.keySet.max)
+      // Find the unique parent directories of all leaf files in the output. We can use FileSystem.mkdirs() to
+      // recursively create the same relative paths in the outputDir.
+      val sourceDirToStatus = sourceDirs.map { status => (status.getPath, status) }.toMap
+      val leafSourceDirs = sourceFiles.map { _.getPath.getParent }.toSet
 
-      // Create the output paths
-      deepestLevelSourceDirectories.foreach { sourceFileStatus: FileStatus =>
-        val sourcePath = sourceFileStatus.getPath
+      // Create the output dirs
+      leafSourceDirs.foreach { sourcePath =>
+        val sourceFileStatus = sourceDirToStatus(sourcePath)
         val relativePath = new Path(workingDir.toUri.relativize(sourcePath.toUri))
         val destinationPath = new Path(outputDir, relativePath)
         if (!fs.mkdirs(destinationPath, sourceFileStatus.getPermission)) {
