@@ -2,7 +2,7 @@ package scamr.io
 
 import java.io.IOException
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
+import org.apache.hadoop.fs.{PathFilter, FileStatus, FileSystem, Path}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.output.{MultipleOutputs, LazyOutputFormat, FileOutputFormat}
 import scamr.io.InputOutput.Sink
@@ -81,7 +81,6 @@ class IncrementalMultipleOutputsFileSink[K, V](val jobName: String, baseOutputDi
   }
 
   override def onOutputWritten(job: Job, success: Boolean) {
-
     val conf = job.getConfiguration
     val fs = FileSystem.get(workingDir.toUri, conf)
 
@@ -90,13 +89,17 @@ class IncrementalMultipleOutputsFileSink[K, V](val jobName: String, baseOutputDi
         fs.delete(workingDir, true)
       }
     } else {
+      val pathFilter = new PathFilter {
+        // Filter out the empty _SUCCESS file and the unnecessary _logs directory
+        def accept(path: Path): Boolean = path.getName != "_SUCCESS" && path.getName != "_logs"
+      }
       // Find all source files and directories in workingDir.
-      val (sourceDirs, sourceFiles) = InputOutputUtils.listRecursive(workingDir, fs).partition { _.isDir }
+      val (sourceDirs, sourceFiles) = InputOutputUtils.listRecursive(workingDir, fs, pathFilter).partition { _.isDir }
 
       // Find the unique parent directories of all leaf files in the output. We can use FileSystem.mkdirs() to
       // recursively create the same relative paths in the outputDir.
       val sourceDirToStatus = sourceDirs.map { status => (status.getPath, status) }.toMap
-      val leafSourceDirs = sourceFiles.map { _.getPath.getParent }.toSet
+      val leafSourceDirs = sourceFiles.map { _.getPath.getParent }.filterNot { _.equals(workingDir) }.toSet
 
       // Create the output dirs
       leafSourceDirs.foreach { sourcePath =>
@@ -113,7 +116,7 @@ class IncrementalMultipleOutputsFileSink[K, V](val jobName: String, baseOutputDi
       // and we would end up with partially-copied files == data corruption. There are ways to correctly handle this,
       // i.e. use ZK to keep list of MR job ids for which files have not been copied and clean the partially-moved
       // files if the move fails ... but we don't do that here, at least for now.
-      sourceFiles.view.filter { _.getPath.getName != "_SUCCESS" }.foreach { status =>
+      sourceFiles.foreach { status =>
         val sourcePath = status.getPath
         val relativePath = new Path(workingDir.toUri.relativize(sourcePath.toUri))
         val destPath = new Path(outputDir, relativePath)
