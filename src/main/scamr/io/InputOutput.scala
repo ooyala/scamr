@@ -3,7 +3,7 @@ package scamr.io
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueTextInputFormat, TextInputFormat, FileInputFormat}
 import org.apache.hadoop.mapreduce.{OutputFormat, Job, InputFormat}
-import org.apache.hadoop.mapreduce.lib.output.{SequenceFileOutputFormat, TextOutputFormat, FileOutputFormat}
+import org.apache.hadoop.mapreduce.lib.output._
 import org.apache.hadoop.io.compress.{DefaultCodec, SnappyCodec, CompressionCodec}
 import org.apache.hadoop.io.{Writable, Text, LongWritable}
 import org.apache.hadoop.conf.Configuration
@@ -15,6 +15,10 @@ object InputOutput {
     def configureInput(job: Job) {
       job.setInputFormatClass(inputFormatClass)
     }
+
+    // Subclasses can override to run custom code after the input has been read from this Source, or the stage reading
+    // the input failed.
+    def onInputRead(job: Job, success: Boolean) {}
   }
 
   // A base class for all Sources that read input from files.
@@ -43,13 +47,25 @@ object InputOutput {
     def configureOutput(job: Job) {
       job.setOutputFormatClass(outputFormatClass)
     }
+
+    // Subclasses can override to run custom code after the output has been written to this Sink successfully, or
+    // the stage writing to the output failed.
+    def onOutputWritten(job: Job, success: Boolean) {}
+  }
+
+  // A sink that discards all output written to it.
+  class NullSink[K, V] extends InputOutput.Sink[K, V] {
+    def outputFormatClass: Class[_ <: OutputFormat[K, V]] = classOf[NullOutputFormat[K, V]]
   }
 
   // A base class for all Sinks that write output to files.
   abstract class FileSink[K, V]
-      (override val outputFormatClass: Class[_ <: OutputFormat[K, V]], val outputDir: String)
+      (override val outputFormatClass: Class[_ <: OutputFormat[K, V]], val outputDir: Path)
       (implicit km: Manifest[K], vm: Manifest[V])
       extends Sink[K, V] {
+
+    def this(outputFormatClass: Class[_ <: OutputFormat[K, V]], outputDir: String)
+            (implicit km: Manifest[K], vm: Manifest[V]) = this(outputFormatClass, new Path(outputDir))(km, vm)
 
     // The key and value types must be Writable so they can be written to the job output files.
     // Unfortunately this check happens at runtime rather than compile time. The reason is that we can't
@@ -62,15 +78,23 @@ object InputOutput {
 
     override def configureOutput(job: Job) {
       super.configureOutput(job)
-      FileOutputFormat.setOutputPath(job, new Path(outputDir))
+      FileOutputFormat.setOutputPath(job, outputDir)
     }
   }
 
-  class TextFileSink[K, V](outputDir: String)(implicit km: Manifest[K], vm: Manifest[V])
-      extends FileSink[K, V](classOf[TextOutputFormat[K, V]], outputDir);
+  class TextFileSink[K, V](outputDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
+      extends FileSink[K, V](classOf[TextOutputFormat[K, V]], outputDir) {
 
-  class SequenceFileSink[K, V](outputDir: String)(implicit km: Manifest[K], vm: Manifest[V])
-      extends FileSink[K, V](classOf[SequenceFileOutputFormat[K, V]], outputDir);
+    def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) =
+      this(new Path(outputDir))(km, vm)
+  }
+
+  class SequenceFileSink[K, V](outputDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
+      extends FileSink[K, V](classOf[SequenceFileOutputFormat[K, V]], outputDir) {
+
+    def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) =
+      this(new Path(outputDir))(km, vm)
+  }
 
   // A trait for an IO object that's both a source and a sink. This is used to "glue" multi-stage MR
   // pipelines together.
@@ -78,7 +102,7 @@ object InputOutput {
 
   abstract class FileLink[K, V](override val outputFormatClass: Class[_ <: OutputFormat[K, V]],
                                 override val inputFormatClass: Class[_ <: InputFormat[K, V]],
-                                val workingDir: String)(implicit km: Manifest[K], vm: Manifest[V])
+                                val workingDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
                                 extends Link[K, V] {
 
     // The key and value types must be Writable so they can be written to the intermediate sequence files.
@@ -92,7 +116,7 @@ object InputOutput {
 
     override def configureOutput(producerJob: Job) {
       super.configureOutput(producerJob)
-      FileOutputFormat.setOutputPath(producerJob, new Path(workingDir))
+      FileOutputFormat.setOutputPath(producerJob, workingDir)
 
       // When using a FileLink, compress the job output with the SnappyCodec. This should make the job
       // run faster and use less disk space in basically every case, with no negative side effects.
@@ -123,22 +147,26 @@ object InputOutput {
 
     override def configureInput(consumerJob: Job) {
       super.configureInput(consumerJob)
-      FileInputFormat.addInputPath(consumerJob, new Path(workingDir))
+      FileInputFormat.addInputPath(consumerJob, workingDir)
+    }
+
+    // Subclasses can override to run custom code after the input has been read from the Source successfully.
+    override def onInputRead(job: Job, success: Boolean) {
+      super.onInputRead(job, success)
+      if (success) { cleanupWorkingDir(job.getConfiguration) }
     }
 
     def cleanupWorkingDir(conf: Configuration) {
       if (!conf.getBoolean("scamr.always.keep.interstage.files", false)) {
-        val path = new Path(workingDir)
-        val fs = FileSystem.get(path.toUri, conf)
-        fs.delete(path, true)
+        FileSystem.get(workingDir.toUri, conf).delete(workingDir, true)
       }
     }
   }
 
-  class SequenceFileLink[K, V](workingDir: String)(implicit km: Manifest[K], vm: Manifest[V])
-      extends FileLink[K, V](classOf[SequenceFileOutputFormat[K, V]], classOf[SequenceFileInputFormat[K, V]], workingDir);
+  class SequenceFileLink[K, V](workingDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
+      extends FileLink[K, V](classOf[SequenceFileOutputFormat[K, V]], classOf[SequenceFileInputFormat[K, V]], workingDir)
 
-  private def mustBeWritable[T](manifest: Manifest[T], messagePrefix: String) {
+  def mustBeWritable[T](manifest: Manifest[T], messagePrefix: String) {
     val clazz = manifest.erasure.asInstanceOf[Class[T]]
     if (!classOf[Writable].isAssignableFrom(clazz)) {
       throw new RuntimeException(

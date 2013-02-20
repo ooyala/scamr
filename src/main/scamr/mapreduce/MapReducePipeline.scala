@@ -4,6 +4,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import scamr.io.{InputOutputUtils, InputOutput}
 import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
+import scamr.io.InputOutput.{Sink, Source}
+import org.apache.hadoop.fs.Path
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
   def execute(): Boolean = pipeline.execute()
@@ -88,7 +90,7 @@ object MapReducePipeline {
     protected var confModifiers: List[ConfModifier] = List()
     protected var jobModifiers: List[JobModifier] = List()
 
-    val workingDir: String = randomWorkingDir("tmp", scamrJob.name)
+    val workingDir: Path = InputOutputUtils.randomWorkingDir(new Path("tmp"), scamrJob.name)
 
     def -->(sink: InputOutput.Sink[K2, V2]): MapReducePipeline = {
       val nextStage = new OutputStage[K2, V2](this, sink)
@@ -136,11 +138,10 @@ object MapReducePipeline {
 
       val job = createAndConfigureJob
       result = job.waitForCompletion(true)
-      if (result && prev.isInstanceOf[LinkStage[_, _]]) {
-        // If the job succeeded and the previous stage was a LinkStage, delete the working directory with the
-        // intermediate files
-        prev.asInstanceOf[LinkStage[_, _]].cleanupWorkingDir(job.getConfiguration)
-      }
+      // Tell our Source that the input has been read, and whether we succeeded or not
+      // Tell our Sink that the output has been written, and whether we succeeded or not
+      prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
+      next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, result)
       return result
     }
 
@@ -157,14 +158,9 @@ object MapReducePipeline {
       scamrJob.configureJob(hadoopJob)
       hadoopJob
     }
-
-    // Generates a random working directory name using the current time, user name, job name, and a
-    // random number as components.
-    def randomWorkingDir(prefix: String, jobName: String): String =
-      InputOutputUtils.randomWorkingDir(prefix, jobName)
   }
 
-  class LinkStage[K, V](override val prev: Stage[_, _, K, V], val workingDir: String)
+  class LinkStage[K, V](override val prev: Stage[_, _, K, V], val workingDir: Path)
                        (implicit km: Manifest[K], vm: Manifest[V])
       extends Stage[K, V, K, V] with SourceLike[K, V] with SinkLike[K, V] {
 
