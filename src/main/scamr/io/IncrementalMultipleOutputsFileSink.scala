@@ -1,11 +1,11 @@
 package scamr.io
 
 import java.io.IOException
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.output._
+import org.apache.hadoop.mapreduce.lib.output.{MultipleOutputs, LazyOutputFormat, FileOutputFormat}
 import scamr.io.InputOutput.Sink
-import org.apache.hadoop.conf.Configuration
 
 /**
  * An output Sink for incrementally writing data to an output directory with subdirectories, using MultipleOutputs.
@@ -37,7 +37,7 @@ class IncrementalMultipleOutputsFileSink[K, V](val jobName: String, baseOutputDi
   InputOutput.mustBeWritable(vm, "Value class")
 
   // Suppress the regular output. All outputs happen via MultipleOutputs.write()
-  override val outputFormatClass = classOf[NullOutputFormat[K, V]]
+  override val outputFormatClass = classOf[NoWritesAllowedOutputFormat[K, V]]
 
   private var conf: Configuration = _
 
