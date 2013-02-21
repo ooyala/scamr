@@ -1,4 +1,4 @@
-package scamr.io
+package scamr.io.lib
 
 import java.io.IOException
 import org.apache.hadoop.conf.Configuration
@@ -6,6 +6,7 @@ import org.apache.hadoop.fs.{PathFilter, FileStatus, FileSystem, Path}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.output.{MultipleOutputs, LazyOutputFormat, FileOutputFormat}
 import scamr.io.InputOutput.Sink
+import scamr.io.{InputOutputUtils, InputOutput}
 
 /**
  * An output Sink for incrementally writing data to an output directory with subdirectories, using MultipleOutputs.

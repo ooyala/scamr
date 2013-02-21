@@ -1,7 +1,7 @@
-package scamr.io
+package scamr.io.lib
 
-import org.apache.hadoop.mapreduce._
 import java.io.IOException
+import org.apache.hadoop.mapreduce._
 
 /**
  * An OutputFormat that throws an IOException on all write attempts. Use this for jobs that use MultipleOutputs
