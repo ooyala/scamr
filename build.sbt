@@ -15,18 +15,16 @@ unmanagedSourceDirectories in Test <<= Seq(baseDirectory(_ / "src" / "test")).jo
 
 unmanagedSourceDirectories in Compile <<= Seq( baseDirectory(_ / "src" / "main")).join
 
-// Compile against Cloudera's CDH3u4 distro by default
-libraryDependencies += "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u4"
-
 // The above artifact needs access to Cloudera's maven repo
 resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 
-libraryDependencies += "commons-logging" % "commons-logging" % "1.0.4"
-
-libraryDependencies += "commons-codec" % "commons-codec" % "1.4"
-
-// Note: joda-time 2.0 seems to have some problems loading
-libraryDependencies += "joda-time" % "joda-time" % "1.6.2"
+// Compile against Cloudera's CDH3u4 distro by default
+libraryDependencies ++= Seq(
+  "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u4",
+  "commons-logging" % "commons-logging" % "1.0.4",
+  "commons-codec" % "commons-codec" % "1.4",
+  "joda-time" % "joda-time" % "1.6.2"    // Note: joda-time 2.0 seems to have some problems loading
+)
 
 // This is to prevent error [java.lang.OutOfMemoryError: PermGen space]
 javaOptions += "-XX:MaxPermSize=1024m"
