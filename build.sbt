@@ -10,6 +10,8 @@ version := "0.1.6-SNAPSHOT"
 
 scalaVersion := "2.9.1"
 
+crossScalaVersions := Seq("2.9.1", "2.10.0")
+
 // sbt defaults to <project>/src/test/{scala,java} unless we put this in
 unmanagedSourceDirectories in Test <<= Seq(baseDirectory(_ / "src" / "test")).join
 
