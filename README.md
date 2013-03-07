@@ -259,7 +259,13 @@ or `false` if it failed (Note: this API is not yet stable, and may throw excepti
 First, you need sbt 0.12.1 and scala 2.9.1 or scala 2.10.0. To build scamr as a library and install it to your local ivy cache, run:
 
 ```bash
-sbt package && sbt publish-local
+sbt publish-local
+```
+
+To publish for both 2.9.1 and 2.10.0, do
+
+```bash
+sbt "+ publish-local"
 ```
 
 To build a "fat jar" that you can use to run the examples, run `sbt assembly`. This will create a self-contained jar that can be run locally or on a hadoop cluster at `target/scamr-examples.jar`.
