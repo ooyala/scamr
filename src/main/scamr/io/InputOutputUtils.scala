@@ -43,10 +43,10 @@ object InputOutputUtils {
 
   def listRecursive(rootPath: Path, fs: FileSystem, filter: PathFilter, maxDepth: Int): Array[FileStatus] = {
     var fileStati = mutable.Buffer[FileStatus]()
-    var (nextDirs, nextFiles) = fs.listStatus(Array(fullyQualifiedPath(rootPath, fs)), filter).partition { _.isDir }
-    if (nextDirs.isEmpty) {
+    if (!fs.getFileStatus(rootPath).isDir) {
       throw new IOException("Root path is not a directory: " + rootPath.toUri.toString)
     }
+    var (nextDirs, nextFiles) = fs.listStatus(Array(fullyQualifiedPath(rootPath, fs)), filter).partition { _.isDir }
 
     var curDepth = 0
     while (nextDirs.nonEmpty) {
