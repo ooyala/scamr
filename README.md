@@ -21,7 +21,7 @@ ScaMR is a Scala framework for writing Hadoop MapReduce jobs and/or pipelines. K
 * Assumes that multi-job pipelines are the common case and optimizes for it. Stand-alone jobs are just specified as one-stage pipelines.
 * Uses Snappy-compressed SequenceFiles for piping data from one job to the next (NOTE: This requires the SnappyCodec to be installed on your cluster. Cloudera's CDH3u1+ provides this out of the box, but your mileage may vary with other Hadoop distributions).
 * For now, only supports linear multi-job pipelines, but may well support DAGs (for running independent stages in parallel) in the future.
-* (Since version 0.2.0) Supports dependency injection into mappers, combiners, and reducers using [SubCut](https://github.com/dickwall/subcut).
+* (Since version 0.2.1) Supports dependency injection into mappers, combiners, and reducers using [SubCut](https://github.com/dickwall/subcut).
 
 # MapReduce job pipelines
 
@@ -255,9 +255,9 @@ val pipeline = MapReducePipeline.init(baseHadoopConfiguration) -->
 Once you've specified your pipeline, simply call `pipeline.execute()`. The method returns `true` if the job succeeded,
 or `false` if it failed (Note: this API is not yet stable, and may throw exceptions on failures in some future version).
 
-# Dependency Injection (since version 0.2.0)
+# Dependency Injection (since version 0.2.1)
 
-As of version 0.2.0, ScaMR supports dependency injection into SimpleMapper / SimpleCombiner / SimpleReducer instances using [SubCut](https://github.com/dickwall/subcut). This can make it much easier to unit test complex mappers/reducers/combiners (for example with [Apache's MRUnit](http://mrunit.apache.org)), by injecting code into your mappers etc in your test cases. To make your SimpleMapper (Combiner, Reducer) use dependency injection, just a few simple steps are required:
+As of version 0.2.1, ScaMR supports dependency injection into SimpleMapper / SimpleCombiner / SimpleReducer instances using [SubCut](https://github.com/dickwall/subcut) (Note: DO NOT use dependency injection in 0.2.0 since it was, unfortunately, broken). This can make it much easier to unit test complex mappers/reducers/combiners (for example with [Apache's MRUnit](http://mrunit.apache.org)), by injecting code into your mappers etc in your test cases. To make your SimpleMapper (Combiner, Reducer) use dependency injection, just a few simple steps are required:
 
 1. Extend the trait `com.escalatesoft.subcut.inject.Injectable`
 2. Add an implicit constructor parameter `(implicit override val bindingModule: BindingModule)`
