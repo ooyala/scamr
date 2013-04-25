@@ -11,7 +11,7 @@ object ReducerDef {
     (implicit k3m: Manifest[K3], v3m: Manifest[V3]) = new ClassicReducerDef(classicReducer)
 
   implicit def injectableReducerClassToDef[K2, V2, K3, V3](clazz: SimpleInjectableClass[K2, V2, K3, V3])
-    (implicit k3m: Manifest[K3], v3m: Manifest[V3], bindingModule: BindingModule) = new SimpleReducerDef(clazz)
+    (implicit k3m: Manifest[K3], v3m: Manifest[V3], bindingModule: BindingModule) = new InjectableReducerDef(clazz)
 
   implicit def simpleReducerClassToDef[K2, V2, K3, V3](clazz: Class[_ <: SimpleReducer[K2, V2, K3, V3]])
     (implicit k3m: Manifest[K3], v3m: Manifest[V3]) = new SimpleReducerDef(clazz)
