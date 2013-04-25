@@ -1,8 +1,8 @@
 package scamr.mapreduce.mapper
 
 import org.apache.hadoop.conf.Configuration
-import scamr.io.SerializableFunction2
 import org.apache.hadoop.mapreduce.Mapper
+import scamr.io.SerializableFunction2
 import scamr.mapreduce.lambda.LambdaMapContext
 
 // Note: Much of this class was copied from Jonathan Clark's Scadoop project (https://github.com/jhclark/scadoop)

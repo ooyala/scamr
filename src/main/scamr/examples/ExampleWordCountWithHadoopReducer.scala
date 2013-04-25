@@ -3,12 +3,12 @@ package scamr.examples
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapreduce.lib.reduce.LongSumReducer
-
 import scamr.MapReduceMain
 import scamr.conf.ConfigureSpeculativeExecution
 import scamr.conf.LambdaJobModifier
 import scamr.io.InputOutput
 import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
+
 
 /*
  * This example demonstrates compatibility with pure-hadoop reducers, by using a pure-hadoop reducer that ships with

@@ -1,12 +1,12 @@
 package scamr.examples
 
 import org.apache.hadoop.conf.Configuration
-
 import scamr.MapReduceMain
 import scamr.conf.ConfigureSpeculativeExecution
+import scamr.conf.LambdaJobModifier
 import scamr.io.InputOutput
 import scamr.mapreduce.{MapReduceJob, MapReducePipeline}
-import scamr.conf.LambdaJobModifier
+
 
 object ExampleWordCountMapReduce extends MapReduceMain {
   override def run(conf: Configuration, args: Array[String]): Int = {

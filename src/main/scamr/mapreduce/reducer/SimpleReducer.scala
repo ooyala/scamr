@@ -1,10 +1,10 @@
 package scamr.mapreduce.reducer
 
-import org.apache.hadoop.mapreduce.{Reducer, ReduceContext}
-import org.apache.hadoop.conf.Configuration
-import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
-import java.lang.reflect.InvocationTargetException
 import com.escalatesoft.subcut.inject.{BindingModule, Injectable}
+import java.lang.reflect.InvocationTargetException
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.mapreduce.{Reducer, ReduceContext}
+import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
 
 abstract class SimpleReducer[K1, V1, K2, V2](val context: ReduceContext[_, _, _, _])
     extends KeyValueEmitter[K2, V2] with CounterUpdater {

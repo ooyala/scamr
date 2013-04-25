@@ -1,12 +1,12 @@
 package scamr.mapreduce
 
-import org.apache.hadoop.mapreduce.{Reducer, Mapper, Job}
 import org.apache.hadoop.io.compress.{DefaultCodec, CompressionCodec, SnappyCodec}
+import org.apache.hadoop.mapreduce.{Reducer, Mapper, Job}
 import scamr.conf.{ConfModifier, LambdaConfModifier}
+import scamr.io.NullCompressionCodec
+import scamr.mapreduce.combiner.CombinerDef
 import scamr.mapreduce.mapper.MapperDef
 import scamr.mapreduce.reducer.ReducerDef
-import scamr.mapreduce.combiner.CombinerDef
-import scamr.io.NullCompressionCodec
 
 // Note the private primary c-tor. Class can only be instantiated via secondary constructors which take
 // {Mapper|Combiner|Reducer}Def parameters.

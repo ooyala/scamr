@@ -1,10 +1,10 @@
 package scamr.examples
 
-import scamr.MapReduceMain
 import org.apache.hadoop.conf.Configuration
-import scamr.io.InputOutput
-import scamr.conf.ConfigureSpeculativeExecution
 import org.apache.hadoop.io.{LongWritable, Text}
+import scamr.MapReduceMain
+import scamr.conf.ConfigureSpeculativeExecution
+import scamr.io.InputOutput
 import scamr.mapreduce.{MapOnlyJob, MapReducePipeline}
 
 /* This example demonstrates a map-only MR job. */

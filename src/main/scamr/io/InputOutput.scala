@@ -1,12 +1,12 @@
 package scamr.io
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueTextInputFormat, TextInputFormat, FileInputFormat}
-import org.apache.hadoop.mapreduce.{OutputFormat, Job, InputFormat}
-import org.apache.hadoop.mapreduce.lib.output._
 import org.apache.hadoop.io.compress.{DefaultCodec, SnappyCodec, CompressionCodec}
 import org.apache.hadoop.io.{Writable, Text, LongWritable}
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueTextInputFormat, TextInputFormat, FileInputFormat}
+import org.apache.hadoop.mapreduce.lib.output._
+import org.apache.hadoop.mapreduce.{OutputFormat, Job, InputFormat}
 
 object InputOutput {
   // A trait for input sources

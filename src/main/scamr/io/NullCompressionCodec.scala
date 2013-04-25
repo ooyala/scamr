@@ -1,6 +1,5 @@
 package scamr.io
 
-import java.lang.Class
 import java.io.{OutputStream, InputStream}
 import org.apache.hadoop.io.compress._
 

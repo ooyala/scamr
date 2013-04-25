@@ -1,7 +1,7 @@
 package scamr.io.tuples
 
-import org.apache.hadoop.io.{WritableComparable, Writable}
 import java.io.{DataOutput, DataInput}
+import org.apache.hadoop.io.{WritableComparable, Writable}
 
 abstract class Tuple2WritableComparable[A <: Writable with Comparable[_], B <: Writable with Comparable[_]]
     (val tuple: (A, B))

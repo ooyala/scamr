@@ -5,7 +5,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{PathFilter, FileStatus, FileSystem, Path}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, DateTime}
-import scala.Array
 import scala.collection.mutable
 
 object InputOutputUtils {

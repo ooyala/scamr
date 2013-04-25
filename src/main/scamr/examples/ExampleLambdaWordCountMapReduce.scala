@@ -2,12 +2,12 @@ package scamr.examples
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.{LongWritable, Text}
-
 import scamr.MapReduceMain
 import scamr.conf.{SetConfigParam, ConfigureSpeculativeExecution, LambdaJobModifier}
 import scamr.io.InputOutput
-import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
 import scamr.mapreduce.lambda.{LambdaReduceContext, LambdaMapContext}
+import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
+
 
 /* This example demonstrates an MR job that uses ScaMR's lambda-based mapper and reducer. */
 object ExampleLambdaWordCountMapReduce extends MapReduceMain {

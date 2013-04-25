@@ -2,15 +2,15 @@ package scamr.examples
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.{NullWritable, LongWritable, Text}
-
+import org.apache.hadoop.mapreduce.{ReduceContext, MapContext}
 import scamr.MapReduceMain
+import scamr.conf.{LambdaJobModifier, ConfigureSpeculativeExecution}
 import scamr.io.InputOutput
 import scamr.io.tuples.Tuple2WritableComparable
 import scamr.mapreduce.mapper.SimpleMapper
 import scamr.mapreduce.reducer.SimpleReducer
 import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
-import scamr.conf.{LambdaJobModifier, ConfigureSpeculativeExecution}
-import org.apache.hadoop.mapreduce.{ReduceContext, MapContext}
+
 
 class LongAndTextWritableComparable(tuple: (LongWritable, Text))
     extends Tuple2WritableComparable[LongWritable, Text](tuple) {

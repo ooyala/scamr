@@ -1,11 +1,11 @@
 package scamr.mapreduce.combiner
 
-import org.apache.hadoop.mapreduce.{ReduceContext, Reducer}
-
-import org.apache.hadoop.conf.Configuration
-import scamr.mapreduce.reducer.SimpleReducer
-import java.lang.reflect.InvocationTargetException
 import com.escalatesoft.subcut.inject.{Injectable, BindingModule}
+import java.lang.reflect.InvocationTargetException
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.mapreduce.{ReduceContext, Reducer}
+import scamr.mapreduce.reducer.SimpleReducer
+
 
 abstract class SimpleCombiner[K, V](context: ReduceContext[_, _, _, _]) extends SimpleReducer[K, V, K, V](context);
 

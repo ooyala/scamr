@@ -1,10 +1,10 @@
 package scamr.mapreduce.mapper
 
-import org.apache.hadoop.mapreduce.{Mapper, MapContext}
-import org.apache.hadoop.conf.Configuration
-import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
-import java.lang.reflect.InvocationTargetException
 import com.escalatesoft.subcut.inject.{Injectable, BindingModule}
+import java.lang.reflect.InvocationTargetException
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.mapreduce.{Mapper, MapContext}
+import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
 
 abstract class SimpleMapper[K1, V1, K2, V2](val context: MapContext[_, _, _, _])
     extends KeyValueEmitter[K2, V2] with CounterUpdater {

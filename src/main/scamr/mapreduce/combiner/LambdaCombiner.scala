@@ -1,7 +1,7 @@
 package scamr.mapreduce.combiner
 
-import scamr.mapreduce.lambda.BaseLambdaReducer
 import org.apache.hadoop.conf.Configuration
+import scamr.mapreduce.lambda.BaseLambdaReducer
 
 class LambdaCombiner[K2, V2] extends BaseLambdaReducer[K2, V2, K2, V2] {
   override val functionPropertyName = BaseLambdaReducer.CombineFunctionProperty

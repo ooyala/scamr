@@ -2,8 +2,8 @@ package scamr.io
 
 import java.io.{ByteArrayInputStream, ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream}
 import java.nio.charset.Charset
-
 import org.apache.commons.codec.binary.Base64
+
 
 class SerializableFunction2[-T1, -T2, +R](private val lambda: (T1, T2) => R) extends Function2[T1, T2, R] with Serializable {
   override def apply(a: T1, b: T2): R = lambda(a, b)

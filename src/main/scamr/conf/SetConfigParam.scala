@@ -1,8 +1,8 @@
 package scamr.conf
 
-import scala.util.matching.Regex
 import java.util.regex.Pattern
 import org.apache.hadoop.conf.Configuration
+import scala.util.matching.Regex
 
 object SetConfigParam {
   // Use this for a single config param

@@ -1,8 +1,8 @@
 package scamr.mapreduce.reducer
 
+import com.escalatesoft.subcut.inject.{Injectable, BindingModule}
 import org.apache.hadoop.mapreduce.Reducer
 import scamr.conf.{LambdaConfModifier, ConfModifier}
-import com.escalatesoft.subcut.inject.{Injectable, BindingModule}
 
 object ReducerDef {
   type SimpleInjectableClass[K2, V2, K3, V3] = Class[_ <: SimpleReducer[K2, V2, K3, V3] with Injectable]

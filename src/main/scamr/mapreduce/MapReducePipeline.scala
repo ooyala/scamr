@@ -1,11 +1,10 @@
 package scamr.mapreduce
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.Job
-import scamr.io.{InputOutputUtils, InputOutput}
-import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
-import scamr.io.InputOutput.{Sink, Source}
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapreduce.Job
+import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
+import scamr.io.{InputOutputUtils, InputOutput}
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
   def execute(): Boolean = pipeline.execute()
