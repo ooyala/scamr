@@ -5,12 +5,13 @@ import scamr.conf.{LambdaConfModifier, ConfModifier}
 import com.escalatesoft.subcut.inject.{Injectable, BindingModule}
 
 object ReducerDef {
+  type SimpleInjectableClass[K2, V2, K3, V3] = Class[_ <: SimpleReducer[K2, V2, K3, V3] with Injectable]
+
   implicit def classicReducerToDef[K2, V2, K3, V3](classicReducer: Reducer[K2, V2, K3, V3])
     (implicit k3m: Manifest[K3], v3m: Manifest[V3]) = new ClassicReducerDef(classicReducer)
 
-  implicit def injectableReducerClassToDef[K2, V2, K3, V3]
-  (clazz: Class[_ <: SimpleReducer[K2, V2, K3, V3] with Injectable])
-  (implicit k3m: Manifest[K3], v3m: Manifest[V3], bindingModule: BindingModule) = new SimpleReducerDef(clazz)
+  implicit def injectableReducerClassToDef[K2, V2, K3, V3](clazz: SimpleInjectableClass[K2, V2, K3, V3])
+    (implicit k3m: Manifest[K3], v3m: Manifest[V3], bindingModule: BindingModule) = new SimpleReducerDef(clazz)
 
   implicit def simpleReducerClassToDef[K2, V2, K3, V3](clazz: Class[_ <: SimpleReducer[K2, V2, K3, V3]])
     (implicit k3m: Manifest[K3], v3m: Manifest[V3]) = new SimpleReducerDef(clazz)

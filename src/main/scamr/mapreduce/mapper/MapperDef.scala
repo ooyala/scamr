@@ -5,10 +5,12 @@ import scamr.conf.{LambdaConfModifier, ConfModifier}
 import com.escalatesoft.subcut.inject.{BindingModule, Injectable}
 
 object MapperDef {
+  type SimpleInjectableClass[K1, V1, K2, V2] =  Class[_ <: SimpleMapper[K1, V1, K2, V2] with Injectable]
+
   implicit def classicMapperToDef[K1, V1, K2, V2](classicMapper: Mapper[K1, V1, K2, V2])
     (implicit k2m: Manifest[K2], v2m: Manifest[V2]) = new ClassicMapperDef(classicMapper)
 
-  implicit def injectableMapperClassToDef[K1, V1, K2, V2](clazz: Class[_ <: SimpleMapper[K1, V1, K2, V2] with Injectable])
+  implicit def injectableMapperClassToDef[K1, V1, K2, V2](clazz: SimpleInjectableClass[K1, V1, K2, V2])
     (implicit k2m: Manifest[K2], v2m: Manifest[V2], bindingModule: BindingModule) = new InjectableMapperDef(clazz)
 
   implicit def simpleMapperClassToDef[K1, V1, K2, V2](clazz: Class[_ <: SimpleMapper[K1, V1, K2, V2]])

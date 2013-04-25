@@ -6,14 +6,16 @@ import scamr.mapreduce.reducer.SimpleReducer
 import com.escalatesoft.subcut.inject.{BindingModule, Injectable}
 
 object CombinerDef {
+  type SimpleInjectableClass[K2, V2] = Class[_ <: SimpleReducer[K2, V2, K2, V2] with Injectable]
+
   implicit def classicCombinerToDef[K2, V2](classicCombiner: Reducer[K2, V2, K2, V2]) =
     new ClassicCombinerDef(classicCombiner)
 
-  implicit def injectableCombinerClassToDef[K2, V2](clazz: Class[_ <: SimpleReducer[K2, V2, K2, V2] with Injectable])
+  implicit def injectableCombinerClassToDef[K2, V2](clazz: SimpleInjectableClass[K2, V2])
                                                    (implicit bindingModule: BindingModule) =
     new InjectableCombinerDef(clazz)
 
-  implicit def simpleReducerClassToDef[K2, V2](clazz: Class[_ <: SimpleReducer[K2, V2, K2, V2]]) =
+  implicit def simpleCombinerClassToDef[K2, V2](clazz: Class[_ <: SimpleReducer[K2, V2, K2, V2]]) =
     new SimpleCombinerDef(clazz)
 
   implicit def lambdaCombineFunctionToDef[K2, V2](lambda: LambdaCombiner[K2, V2]#FunctionType) =
