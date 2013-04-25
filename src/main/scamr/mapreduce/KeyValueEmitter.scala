@@ -7,5 +7,5 @@ trait KeyValueEmitter[KOUT, VOUT] {
   val _context: OutputContextType  // abstract val, must be implemented by subclass
 
   protected def emit(key: KOUT, value: VOUT): Unit = _context.write(key, value)
-  protected def emit(key: KOUT, values: Iterable[VOUT]): Unit = values.foreach { _context.write(key, _) }
+  protected def emit(key: KOUT, values: Iterable[VOUT]): Unit = values.foreach { emit(key, _) }
 }
