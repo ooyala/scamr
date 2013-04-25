@@ -4,6 +4,7 @@ import org.apache.hadoop.mapreduce.{Mapper, MapContext}
 import org.apache.hadoop.conf.Configuration
 import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
 import java.lang.reflect.InvocationTargetException
+import com.escalatesoft.subcut.inject.{Injectable, BindingModule}
 
 abstract class SimpleMapper[K1, V1, K2, V2](val context: MapContext[_, _, _, _])
     extends KeyValueEmitter[K2, V2] with CounterUpdater {
@@ -16,11 +17,16 @@ abstract class SimpleMapper[K1, V1, K2, V2](val context: MapContext[_, _, _, _])
 
 object SimpleMapper {
   val SimpleMapperClassProperty = "scamr.simple.mapper.class"
+  val BindingModuleClassProperty = "scamr.mapper.subcut.binding.module.class"
 
   def getRunnerClass[K1, V1, K2, V2] = classOf[Runner[K1, V1, K2, V2]]
 
   def setSimpleMapperClass[K1, V1, K2, V2](conf: Configuration, clazz: Class[_ <: SimpleMapper[K1, V1, K2, V2]]) {
     conf.setClass(SimpleMapperClassProperty, clazz, classOf[SimpleMapper[K1, V1, K2, V2]])
+  }
+
+  def setBindingModuleClass(conf: Configuration, clazz: Class[_ <: BindingModule]) {
+    conf.setClass(BindingModuleClassProperty, clazz, classOf[BindingModule])
   }
 
   class Runner[K1, V1, K2, V2] extends Mapper[K1, V1, K2, V2] {
@@ -35,9 +41,40 @@ object SimpleMapper {
             SimpleMapperClassProperty))
       }
 
-      val constructor = mapperClass.getConstructor(classOf[MapContext[K1, V1, K2, V2]])
-      mapper = try {
-        constructor.newInstance(context)
+      try {
+        // True iff the mapper is using dependency injection w/ SubCut
+        if (classOf[Injectable].isAssignableFrom(mapperClass)) {
+          val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
+          if (bindingModuleClass == null) {
+            throw new RuntimeException(
+              "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(BindingModuleClassProperty))
+          }
+          val bindingModule = try {
+            bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
+          } catch {
+            case e: NoSuchFieldException =>
+              throw new RuntimeException("Error creating Injectable SimpleMapper instance. " +
+                "Make sure that the SubCut binding module " + bindingModuleClass.getName +
+                " is a scala 'object', and is not nested inside a class.", e)
+          }
+          val constructor = try {
+            mapperClass.getConstructor(classOf[MapContext[K1, V1, K2, V2]], classOf[BindingModule])
+          } catch {
+            case e: NoSuchMethodException =>
+              throw new RuntimeException("Error creating Injectable SimpleMapper instance. " +
+                "Looks like you forgot to specify the BindingModule as an implicit constructor parameter!", e)
+          }
+
+          // make this mapper's context and configuration available for injection
+          mapper = bindingModule.modifyBindings { module =>
+            module.bind [MapContext[_, _, _, _]] toSingle context
+            module.bind [Configuration] toSingle context.getConfiguration
+            constructor.newInstance(context, module)
+          }
+        } else {
+          val constructor = mapperClass.getConstructor(classOf[MapContext[K1, V1, K2, V2]])
+          mapper = constructor.newInstance(context)
+        }
       } catch {
         case e: InvocationTargetException =>
           throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)

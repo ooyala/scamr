@@ -23,6 +23,7 @@ libraryDependencies ++= Seq(
   "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u4",
   "commons-logging" % "commons-logging" % "1.0.4",
   "commons-codec" % "commons-codec" % "1.4",
+  "com.escalatesoft.subcut" %% "subcut" % "2.0",
   "joda-time" % "joda-time" % "1.6.2"    // Note: joda-time 2.0 seems to have some problems loading
 )
 
