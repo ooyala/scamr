@@ -3,11 +3,10 @@ package scamr.mapreduce.lambda
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Reducer
 import scamr.io.SerializableFunction2
+import scamr.mapreduce.CopyingIterator
 
 // Note: Much of this class was copied from Jonathan Clark's Scadoop project (https://github.com/jhclark/scadoop)
 abstract class BaseLambdaReducer[K1, V1, K2, V2] extends Reducer[K1, V1, K2, V2] {
-
-  import scala.collection.JavaConversions
 
   type FunctionType = Function2[Iterator[(K1, Iterator[V1])], LambdaReduceContext, Iterator[(K2, V2)]]
 
@@ -19,7 +18,7 @@ abstract class BaseLambdaReducer[K1, V1, K2, V2] extends Reducer[K1, V1, K2, V2]
     val lambda: FunctionType = BaseLambdaReducer.getLambdaFunction[K1, V1, K2, V2](conf, functionPropertyName)
 
     def next() = context.nextKeyValue() match {
-      case true => Some(context.getCurrentKey, JavaConversions.asScalaIterator(context.getValues.iterator))
+      case true => Some(context.getCurrentKey, new CopyingIterator(context.getConfiguration, context.getValues))
       case false => None
     }
 

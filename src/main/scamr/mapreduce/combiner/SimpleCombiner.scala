@@ -4,10 +4,11 @@ import com.escalatesoft.subcut.inject.{Injectable, BindingModule}
 import java.lang.reflect.InvocationTargetException
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.{ReduceContext, Reducer}
+import scamr.mapreduce.CopyingIterator
 import scamr.mapreduce.reducer.SimpleReducer
 
 
-abstract class SimpleCombiner[K, V](context: ReduceContext[_, _, _, _]) extends SimpleReducer[K, V, K, V](context);
+abstract class SimpleCombiner[K, V](context: ReduceContext[_, _, _, _]) extends SimpleReducer[K, V, K, V](context)
 
 object SimpleCombiner {
   val SimpleCombinerClassProperty = "scamr.simple.combiner.class"
@@ -80,7 +81,7 @@ object SimpleCombiner {
     }
 
     override def reduce(key: K, values: java.lang.Iterable[V], context: Reducer[K, V, K, V]#Context) {
-      combiner.reduce(key, scala.collection.JavaConversions.asScalaIterator(values.iterator()))
+      combiner.reduce(key, new CopyingIterator(context.getConfiguration, values))
     }
 
     override def cleanup(context: Reducer[K, V, K, V]#Context) {
