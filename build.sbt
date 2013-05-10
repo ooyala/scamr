@@ -8,7 +8,7 @@ name := "scamr"
 // $(NEXT_VERSION)-SNAPSHOT afterwards!
 version := "0.2.2-SNAPSHOT"
 
-scalaVersion := "2.9.1"
+scalaVersion := "2.10.0"
 
 // sbt defaults to <project>/src/test/{scala,java} unless we put this in
 unmanagedSourceDirectories in Test <<= Seq(baseDirectory(_ / "src" / "test")).join
