@@ -10,12 +10,7 @@ version := "0.2.3-SNAPSHOT"
 
 scalaVersion := "2.10.0"
 
-// sbt defaults to <project>/src/test/{scala,java} unless we put this in
-unmanagedSourceDirectories in Test <<= Seq(baseDirectory(_ / "src" / "test")).join
-
-unmanagedSourceDirectories in Compile <<= Seq( baseDirectory(_ / "src" / "main")).join
-
-// The above artifact needs access to Cloudera's maven repo
+// The hadoop artifact needs access to Cloudera's maven repo
 resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 
 // Compile against Cloudera's CDH3u4 distro by default
@@ -52,6 +47,8 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { _ filter { cp =>
          "jetty", "jsp-api", "hsqldb", "logback-").exists(cp.data.getName.startsWith(_))
   }
 }
+
+org.scalastyle.sbt.ScalastylePlugin.Settings
 
 //************** Maven publishing settings ***************************
 
