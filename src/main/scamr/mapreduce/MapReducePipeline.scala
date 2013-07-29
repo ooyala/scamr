@@ -12,8 +12,8 @@ class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutab
 
 object MapReducePipeline {
   trait Stage[K1, V1, K2, V2] {
-    val prev: Stage[_, _, K1, V1]
-    var next: Stage[K2, V2, _, _] = _
+    val prev: Stage[_, _, _ <: K1, V1]
+    var next: Stage[_ >: K2, V2, _, _] = _
 
     val baseConfiguration: Configuration
     def execute(): Boolean
@@ -63,9 +63,9 @@ object MapReducePipeline {
       extends Stage[None.type, None.type, K, V] with SourceLike[K, V] {
     override val baseConfiguration = prev.baseConfiguration
 
-    def -->[K2, V2](job: MapReduceJob[K, V, _, _, K2, V2])
-                   (implicit k2m: Manifest[K2], v2m: Manifest[V2]): JobStage[K, V, K2, V2] = {
-      val nextStage = new JobStage[K, V, K2, V2](this, job)(k2m, v2m)
+    def -->[K1 >: K, K2, V2](job: MapReduceJob[K1, V, _, _, K2, V2])
+                            (implicit k2m: Manifest[K2], v2m: Manifest[V2]): JobStage[K1, V, K2, V2] = {
+      val nextStage = new JobStage[K1, V, K2, V2](this, job)(k2m, v2m)
       this.next = nextStage
       nextStage
     }
@@ -80,7 +80,7 @@ object MapReducePipeline {
   //
   // Additionally, ConfModifiers or JobModifiers can be chained from a JobStage, these return the
   // same stage but modify the list of conf/job modifiers.
-  class JobStage[K1, V1, K2, V2](override val prev: Stage[_, _, K1, V1],
+  class JobStage[K1, V1, K2, V2](override val prev: Stage[_, _, _ <: K1, V1],
                                  override val scamrJob: MapReduceJob[K1, V1, _, _, K2, V2])
                                  (implicit val k2m: Manifest[K2], v2m: Manifest[V2])
       extends Stage[K1, V1, K2, V2] with JobLike[K1, V1, K2, V2] {
@@ -102,7 +102,7 @@ object MapReducePipeline {
     def -->(sinkGenerator: () => InputOutput.Sink[K2, V2]): MapReducePipeline = this --> sinkGenerator()
 
     def -->[K3, V3](nextJob: MapReduceJob[K2, V2, _, _, K3, V3])
-                  (implicit k3m: Manifest[K3], v3m: Manifest[V3]): JobStage[K2, V2, K3, V3] = {
+                   (implicit k3m: Manifest[K3], v3m: Manifest[V3]): JobStage[K2, V2, K3, V3] = {
       val nextStage = new LinkStage[K2, V2](this, workingDir)(k2m, v2m)
       this.next = nextStage
       nextStage --> nextJob
@@ -159,18 +159,19 @@ object MapReducePipeline {
     }
   }
 
-  class LinkStage[K, V](override val prev: Stage[_, _, K, V], val workingDir: Path)
+  class LinkStage[K, V](previous: Stage[_, _, K, V], val workingDir: Path)
                        (implicit km: Manifest[K], vm: Manifest[V])
       extends Stage[K, V, K, V] with SourceLike[K, V] with SinkLike[K, V] {
 
+    override val prev = previous.asInstanceOf[Stage[_, _, _ <: K, V]]
     private val link = new InputOutput.SequenceFileLink[K, V](workingDir)
     override val sink: InputOutput.Sink[K, V] = link
     override val source: InputOutput.Source[K, V] = link
     override val baseConfiguration = prev.baseConfiguration
 
-    def -->[K2, V2](job: MapReduceJob[K, V, _, _, K2, V2])
-                   (implicit k2m: Manifest[K2], v2m: Manifest[V2]): JobStage[K, V, K2, V2] = {
-      val nextStage = new JobStage[K, V, K2, V2](this, job)(k2m, v2m)
+    def -->[K1 >: K, K2, V2](job: MapReduceJob[K1, V, _, _, K2, V2])
+                            (implicit k2m: Manifest[K2], v2m: Manifest[V2]): JobStage[K1, V, K2, V2] = {
+      val nextStage = new JobStage[K1, V, K2, V2](this, job)(k2m, v2m)
       this.next = nextStage
       nextStage
     }
@@ -181,8 +182,9 @@ object MapReducePipeline {
     def cleanupWorkingDir(conf: Configuration) { link.cleanupWorkingDir(conf) }
   }
 
-  class OutputStage[K, V](override val prev: Stage[_, _, K, V], override val sink: InputOutput.Sink[K, V])
+  class OutputStage[K, V](previous: Stage[_, _, K, V], override val sink: InputOutput.Sink[K, V])
       extends Stage[K, V, None.type, None.type] with SinkLike[K, V] with PublicExecutable {
+    override val prev = previous.asInstanceOf[Stage[_, _, _ <: K, V]]
     override val baseConfiguration = prev.baseConfiguration
 
     // Only JobStages really execute, everyone else just recurses to the previous stage in the chain
