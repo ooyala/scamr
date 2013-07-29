@@ -6,15 +6,13 @@ import scala.util.matching.Regex
 
 object SetConfigParam {
   // Use this for a single config param
-  def apply[T](name: String, value: T) = LambdaConfModifier { setConfigParam(_, name, value) }
+  def apply[T](name: String, value: T): ConfModifier = LambdaConfModifier { setConfigParam(_, name, value) }
 
   // Use this for a series of config params which can be specified with Map notation:
   //   SetConfigParam(name1 -> value1, name2 -> value2, name3 -> value3)
-  def apply(firstPair: (String, Any), extraPairs: (String, Any)*) = LambdaConfModifier {
-    conf => {
-      setConfigParam(conf, firstPair._1, firstPair._2)
-      extraPairs.foreach { pair => setConfigParam(conf, pair._1, pair._2) }
-    }
+  def apply(firstPair: (String, Any), extraPairs: (String, Any)*): ConfModifier = LambdaConfModifier { conf =>
+    setConfigParam(conf, firstPair._1, firstPair._2)
+    extraPairs.foreach { pair => setConfigParam(conf, pair._1, pair._2) }
   }
 
   private def setConfigParam(conf: Configuration, name: String, value: Any) {

@@ -18,6 +18,6 @@ object ExampleMapOnlyJob extends MapReduceMain {
       new MapOnlyJob(classOf[WordCountMapper], "ScaMR map-only job example") ++
       ConfigureSpeculativeExecution(false, false) -->
       new InputOutput.TextFileSink[Text, LongWritable](outputDir)
-    return if (pipeline.execute) 0 else 1
+    if (pipeline.execute) 0 else 1
   }
 }

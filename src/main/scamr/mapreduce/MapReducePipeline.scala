@@ -42,7 +42,7 @@ object MapReducePipeline {
   // The only type that can be chained from an InitialStage is an InputOutput.Source which returns an
   // InputStage.
   class InitialStage(override val baseConfiguration: Configuration)
-      extends Stage[None.type, None.type, None.type, None.type] {
+  extends Stage[None.type, None.type, None.type, None.type] {
     override val prev = null
     this.next = null
 
@@ -60,7 +60,7 @@ object MapReducePipeline {
   // The only type that can be chained from an InputStage is a JobStage that defines a MapReduce job which
   // processes the input.
   class InputStage[K, V](override val prev: InitialStage, override val source: InputOutput.Source[K, V])
-      extends Stage[None.type, None.type, K, V] with SourceLike[K, V] {
+  extends Stage[None.type, None.type, K, V] with SourceLike[K, V] {
     override val baseConfiguration = prev.baseConfiguration
 
     def -->[K1 >: K, K2, V2](job: MapReduceJob[K1, V, _, _, K2, V2])
@@ -82,8 +82,8 @@ object MapReducePipeline {
   // same stage but modify the list of conf/job modifiers.
   class JobStage[K1, V1, K2, V2](override val prev: Stage[_, _, _ <: K1, V1],
                                  override val scamrJob: MapReduceJob[K1, V1, _, _, K2, V2])
-                                 (implicit val k2m: Manifest[K2], v2m: Manifest[V2])
-      extends Stage[K1, V1, K2, V2] with JobLike[K1, V1, K2, V2] {
+                                (implicit val k2m: Manifest[K2], v2m: Manifest[V2])
+  extends Stage[K1, V1, K2, V2] with JobLike[K1, V1, K2, V2] {
     override val baseConfiguration = prev.baseConfiguration
 
     protected var confModifiers: List[ConfModifier] = List()
@@ -161,7 +161,7 @@ object MapReducePipeline {
 
   class LinkStage[K, V](previous: Stage[_, _, K, V], val workingDir: Path)
                        (implicit km: Manifest[K], vm: Manifest[V])
-      extends Stage[K, V, K, V] with SourceLike[K, V] with SinkLike[K, V] {
+  extends Stage[K, V, K, V] with SourceLike[K, V] with SinkLike[K, V] {
 
     override val prev = previous.asInstanceOf[Stage[_, _, _ <: K, V]]
     private val link = new InputOutput.SequenceFileLink[K, V](workingDir)
@@ -183,7 +183,7 @@ object MapReducePipeline {
   }
 
   class OutputStage[K, V](previous: Stage[_, _, K, V], override val sink: InputOutput.Sink[K, V])
-      extends Stage[K, V, None.type, None.type] with SinkLike[K, V] with PublicExecutable {
+  extends Stage[K, V, None.type, None.type] with SinkLike[K, V] with PublicExecutable {
     override val prev = previous.asInstanceOf[Stage[_, _, _ <: K, V]]
     override val baseConfiguration = prev.baseConfiguration
 

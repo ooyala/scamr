@@ -13,19 +13,19 @@ import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
 
 
 class LongAndTextWritableComparable(tuple: (LongWritable, Text))
-    extends Tuple2WritableComparable[LongWritable, Text](tuple) {
+extends Tuple2WritableComparable[LongWritable, Text](tuple) {
   def this(a1: LongWritable, a2: Text) = this((a1, a2))
   def this() = this((new LongWritable, new Text))
 }
 
 class CombineCountAndWordIntoTupleMapper(context: MapContext[_, _, _, _])
-    extends SimpleMapper[Text, LongWritable, LongAndTextWritableComparable, NullWritable](context) {
+extends SimpleMapper[Text, LongWritable, LongAndTextWritableComparable, NullWritable](context) {
   override def map(word: Text, count: LongWritable) =
     emit(new LongAndTextWritableComparable(count, word), NullWritable.get)
 }
 
 class OutputSortedCountsReducer(context: ReduceContext[_, _, _, _])
-    extends SimpleReducer[LongAndTextWritableComparable, NullWritable, Text, LongWritable](context) {
+extends SimpleReducer[LongAndTextWritableComparable, NullWritable, Text, LongWritable](context) {
   override def reduce(key: LongAndTextWritableComparable, ignored: Iterator[NullWritable]) =
     emit(key._2, key._1)
 }
@@ -50,6 +50,6 @@ object ExampleSortedWordCountMapReduce extends MapReduceMain {
       new MapReduceJob(classOf[CombineCountAndWordIntoTupleMapper], classOf[OutputSortedCountsReducer],
         "ScaMR sorted word count example, stage 2") -->
       new InputOutput.TextFileSink[Text, LongWritable](outputDir)
-    return if (pipeline.execute) 0 else 1
+    if (pipeline.execute) 0 else 1
   }
 }

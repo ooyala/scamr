@@ -7,7 +7,7 @@ import org.apache.hadoop.mapreduce.{Mapper, MapContext}
 import scamr.mapreduce.{CounterUpdater, KeyValueEmitter}
 
 abstract class SimpleMapper[K1, V1, K2, V2](val context: MapContext[_, _, _, _])
-    extends KeyValueEmitter[K2, V2] with CounterUpdater {
+extends KeyValueEmitter[K2, V2] with CounterUpdater {
   override val _context = context.asInstanceOf[MapContext[K1, V1, K2, V2]]
 
   def map(key: K1, value: V1)
@@ -93,5 +93,4 @@ object SimpleMapper {
       mapper.cleanup()
     }
   }
-
 }

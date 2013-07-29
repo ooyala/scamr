@@ -7,7 +7,7 @@ import org.apache.hadoop.mapreduce.{Reducer, ReduceContext}
 import scamr.mapreduce.{CopyingIterator, CounterUpdater, KeyValueEmitter}
 
 abstract class SimpleReducer[K1, V1, K2, V2](val context: ReduceContext[_, _, _, _])
-    extends KeyValueEmitter[K2, V2] with CounterUpdater {
+extends KeyValueEmitter[K2, V2] with CounterUpdater {
   override val _context = context.asInstanceOf[ReduceContext[K1, V1, K2, V2]]
 
   def reduce(key: K1, values: Iterator[V1])
@@ -93,5 +93,4 @@ object SimpleReducer {
       reducer.cleanup()
     }
   }
-
 }

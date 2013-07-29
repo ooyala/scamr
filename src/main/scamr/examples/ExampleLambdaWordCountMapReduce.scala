@@ -13,15 +13,17 @@ import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
 object ExampleLambdaWordCountMapReduce extends MapReduceMain {
   private val One = new LongWritable(1L)
 
-  def map(input: Iterator[(LongWritable, Text)], context: LambdaMapContext): Iterator[(Text, LongWritable)] = for {
-      (offset, line) <- input
-      word <- line.toString.split("\\s+").filterNot { _.isEmpty }.toIterator
-    } yield (new Text(word), One)
+  def map(input: Iterator[(Any, Text)], context: LambdaMapContext): Iterator[(Text, LongWritable)] =
+    input.flatMap { case (offset, line) =>
+      line.toString.split("\\s+").filterNot { _.isEmpty }.map { word => (new Text(word), One) }
+    }
 
-  def reduce(input: Iterator[(Text, Iterator[LongWritable])], context: LambdaReduceContext):
-    Iterator[(Text, LongWritable)] = for {
-      (word, counts) <- input
-    } yield (word, new LongWritable(counts.foldLeft(0L) { (a, b) => a + b.get }))
+  def reduce(input: Iterator[(Text, Iterator[LongWritable])],
+             context: LambdaReduceContext): Iterator[(Text, LongWritable)] =
+    input.map { case (word, counts) =>
+      val sum = counts.foldLeft(0L) { (runningSum, nextCount) => runningSum + nextCount.get }
+      (word, new LongWritable(sum))
+    }
 
   override def run(conf: Configuration, args: Array[String]): Int = {
     val inputDirs = List(args(0))
@@ -36,6 +38,6 @@ object ExampleLambdaWordCountMapReduce extends MapReduceMain {
                      "mapred.reduce.max.attempts" -> 2) ++
       LambdaJobModifier { _.setNumReduceTasks(1) } -->
       new InputOutput.TextFileSink[Text, LongWritable](outputDir)
-    return if (pipeline.execute) 0 else 1
+    if (pipeline.execute) 0 else 1
   }
 }

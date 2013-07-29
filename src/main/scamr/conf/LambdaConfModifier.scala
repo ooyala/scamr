@@ -7,9 +7,9 @@ import org.apache.hadoop.conf.Configuration
  * ConfModifiers for the ScaMR framework without needing to create subclasses.
  */
 class LambdaConfModifier(private val lambda: (Configuration) => Unit) extends ConfModifier {
-  override def apply(conf: Configuration) = lambda(conf)
+  override def apply(conf: Configuration) { lambda(conf) }
 }
 
 object LambdaConfModifier {
-  def apply(lambda: (Configuration) => Unit) = new LambdaConfModifier(lambda)
+  def apply(lambda: (Configuration) => Unit): ConfModifier = new LambdaConfModifier(lambda)
 }

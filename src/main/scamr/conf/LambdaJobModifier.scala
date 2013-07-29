@@ -7,9 +7,9 @@ import org.apache.hadoop.mapreduce.Job
  * JobModifiers for the ScaMR framework without needing to create subclasses.
  */
 class LambdaJobModifier(private val lambda: (Job) => Unit) extends JobModifier {
-  override def apply(job: Job) = lambda(job)
+  override def apply(job: Job) { lambda(job) }
 }
 
 object LambdaJobModifier {
-  def apply(lambda: (Job) => Unit) = new LambdaJobModifier(lambda)
+  def apply(lambda: (Job) => Unit): JobModifier = new LambdaJobModifier(lambda)
 }

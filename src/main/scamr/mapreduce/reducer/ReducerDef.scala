@@ -29,14 +29,14 @@ trait ReducerDef[K2, V2, K3, V3] {
 
 class ClassicReducerDef[K2, V2, K3, V3](val classicReducer: Reducer[K2, V2, K3, V3])
                                        (implicit override val k3m: Manifest[K3], override val v3m: Manifest[V3])
-                                        extends ReducerDef[K2, V2, K3, V3] {
+extends ReducerDef[K2, V2, K3, V3] {
   override val reducerClass = Some(classicReducer.getClass)
   override val confModifiers = List()
 }
 
 class SimpleReducerDef[K2, V2, K3, V3](val simpleReducerClass: Class[_ <: SimpleReducer[K2, V2, K3, V3]])
                                       (implicit override val k3m: Manifest[K3], override val v3m: Manifest[V3])
-                                       extends ReducerDef[K2, V2, K3, V3] {
+extends ReducerDef[K2, V2, K3, V3] {
   override val reducerClass = Some(classOf[SimpleReducer.Runner[K2, V2, K3, V3]])
   override val confModifiers =
     List(LambdaConfModifier { conf => SimpleReducer.setSimpleReducerClass(conf, simpleReducerClass) })
@@ -56,7 +56,7 @@ extends ReducerDef[K2, V2, K3, V3] {
 
 class LambdaReducerDef[K2, V2, K3, V3](val lambdaReduceFunction: LambdaReducer[K2, V2, K3, V3]#FunctionType)
                                       (implicit override val k3m: Manifest[K3], override val v3m: Manifest[V3])
-                                       extends ReducerDef[K2, V2, K3, V3] {
+extends ReducerDef[K2, V2, K3, V3] {
   override val reducerClass = Some(classOf[LambdaReducer[K2, V2, K3, V3]])
   override val confModifiers =
     List(LambdaConfModifier { conf => LambdaReducer.setLambdaFunction(conf, lambdaReduceFunction) })

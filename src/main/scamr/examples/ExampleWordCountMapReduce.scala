@@ -26,7 +26,7 @@ object ExampleWordCountMapReduce extends MapReduceMain {
       // you could do this instead, but then you have to specify the k/v types. I'm working on a cleaner way
       // to get scalac to do the type inference ...
       //   new InputOutput.TextFileSink[Text, LongWritable](outputDir)
-      { () => new InputOutput.TextFileSink(outputDir) }
-    return if (pipeline.execute) 0 else 1
+      (() => new InputOutput.TextFileSink(outputDir))
+    if (pipeline.execute) 0 else 1
  }
 }

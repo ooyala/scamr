@@ -26,7 +26,8 @@ import scamr.io.{InputOutputUtils, InputOutput}
  * @tparam K - the key type
  * @tparam V - the value type
  */
-class IncrementalMultipleOutputsFileSink[K, V](val jobName: String, baseOutputDir: Path,
+class IncrementalMultipleOutputsFileSink[K, V](
+    val jobName: String, baseOutputDir: Path,
     val outputNamesToFormats: Map[String, Class[_ <: FileOutputFormat[K, V]]])
     (implicit km: Manifest[K], vm: Manifest[V]) extends Sink[K, V] {
 

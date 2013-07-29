@@ -33,7 +33,7 @@ class ClassicCombinerDef[K2, V2](val classicCombiner: Reducer[K2, V2, K2, V2]) e
 }
 
 class SimpleCombinerDef[K2, V2](val simpleCombinerClass: Class[_ <: SimpleReducer[K2, V2, K2, V2]])
-    extends CombinerDef[K2, V2] {
+extends CombinerDef[K2, V2] {
   override val combinerClass = Some(classOf[SimpleCombiner.Runner[K2, V2]])
   override val confModifiers =
     List(LambdaConfModifier { conf => SimpleCombiner.setSimpleCombinerClass(conf, simpleCombinerClass) })
@@ -51,7 +51,7 @@ class InjectableCombinerDef[K2, V2]
 }
 
 class LambdaCombinerDef[K2, V2](val lambdaCombineFunction: LambdaCombiner[K2, V2]#FunctionType)
-    extends CombinerDef[K2, V2] {
+extends CombinerDef[K2, V2] {
   override val combinerClass = Some(classOf[LambdaCombiner[K2, V2]])
   override val confModifiers =
     List(LambdaConfModifier { conf => LambdaCombiner.setLambdaFunction(conf, lambdaCombineFunction) })

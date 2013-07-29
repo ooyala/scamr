@@ -14,15 +14,16 @@ class LambdaMapper[K1, V1, K2, V2] extends Mapper[K1, V1, K2, V2] {
     val conf = context.getConfiguration
     val lambda: FunctionType = LambdaMapper.getLambdaFunction[K1, V1, K2, V2](conf)
 
-    def next() = context.nextKeyValue() match {
+    def next(): Option[(K1, V1)] = context.nextKeyValue() match {
       case true => Some(context.getCurrentKey, context.getCurrentValue)
       case false => None
     }
 
     val lambdaMapContext = new LambdaMapContext(context)
-    val iter = Iterator continually(next) takeWhile { _ != None } map { _.get }
-    for ((outKey, outValue) <- lambda(iter, lambdaMapContext)) {
-      context.write(outKey, outValue)
+    val inputIterator = Iterator continually(next) takeWhile { _ != None } map { _.get }
+    val outputIterator = lambda(inputIterator, lambdaMapContext)
+    outputIterator.foreach {
+      case (outKey, outValue) => context.write(outKey, outValue)
     }
     super.cleanup(context.asInstanceOf[this.type#Context])
   }

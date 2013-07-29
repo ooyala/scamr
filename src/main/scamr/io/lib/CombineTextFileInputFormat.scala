@@ -32,7 +32,7 @@ class CombineTextFileInputFormat extends CombineFileInputFormat[FileNameWithOffs
 
 /** The record reader used by {@link CombineTextFileInputFormat}. */
 class CombineFileLineRecordReader(inputSplit: CombineFileSplit, context: TaskAttemptContext, index: java.lang.Integer)
-    extends RecordReader[FileNameWithOffset, Text] {
+extends RecordReader[FileNameWithOffset, Text] {
 
   protected val conf = context.getConfiguration
   protected val path = inputSplit.getPath(index)
@@ -107,4 +107,3 @@ class CombineFileLineRecordReader(inputSplit: CombineFileSplit, context: TaskAtt
   else
     math.min(1.0f, (pos - startOffset).toFloat / (end - startOffset))
 }
-

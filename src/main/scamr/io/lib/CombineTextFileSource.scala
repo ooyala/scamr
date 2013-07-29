@@ -11,4 +11,4 @@ import scamr.io.InputOutput
  * @param inputs one or more file input patterns
  */
 class CombineTextFileSource(val inputs: Iterable[String])
-  extends InputOutput.FileSource[FileNameWithOffset, Text](classOf[CombineTextFileInputFormat], inputs)
+extends InputOutput.FileSource[FileNameWithOffset, Text](classOf[CombineTextFileInputFormat], inputs)

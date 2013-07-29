@@ -7,7 +7,6 @@ import scamr.mapreduce.CopyingIterator
 
 // Note: Much of this class was copied from Jonathan Clark's Scadoop project (https://github.com/jhclark/scadoop)
 abstract class BaseLambdaReducer[K1, V1, K2, V2] extends Reducer[K1, V1, K2, V2] {
-
   type FunctionType = Function2[Iterator[(K1, Iterator[V1])], LambdaReduceContext, Iterator[(K2, V2)]]
 
   val functionPropertyName: String
@@ -17,14 +16,15 @@ abstract class BaseLambdaReducer[K1, V1, K2, V2] extends Reducer[K1, V1, K2, V2]
     val conf = context.getConfiguration
     val lambda: FunctionType = BaseLambdaReducer.getLambdaFunction[K1, V1, K2, V2](conf, functionPropertyName)
 
-    def next() = context.nextKeyValue() match {
+    def next(): Option[(K1, Iterator[V1])] = context.nextKeyValue() match {
       case true => Some(context.getCurrentKey, new CopyingIterator(context.getConfiguration, context.getValues))
       case false => None
     }
 
     val lambdaReduceContext = new LambdaReduceContext(context)
-    val iter = Iterator continually(next) takeWhile { _ != None } map { _.get }
-    for ((outKey, outValue) <- lambda(iter, lambdaReduceContext)) {
+    val inputIterator = Iterator continually(next) takeWhile { _ != None } map { _.get }
+    val outputIterator = lambda(inputIterator, lambdaReduceContext)
+    outputIterator.foreach { case (outKey, outValue) =>
       context.write(outKey, outValue)
     }
     super.cleanup(context.asInstanceOf[this.type#Context])
