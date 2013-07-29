@@ -6,7 +6,7 @@ name := "scamr"
 
 // Remove -SNAPSHOT from the version before publishing a release. Don't forget to change the version to
 // $(NEXT_VERSION)-SNAPSHOT afterwards!
-version := "0.2.2-SNAPSHOT"
+version := "0.2.2"
 
 scalaVersion := "2.10.0"
 
