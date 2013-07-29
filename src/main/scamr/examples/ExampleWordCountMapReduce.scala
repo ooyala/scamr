@@ -5,15 +5,17 @@ import scamr.MapReduceMain
 import scamr.conf.ConfigureSpeculativeExecution
 import scamr.conf.LambdaJobModifier
 import scamr.io.InputOutput
+import scamr.io.lib.CombineTextFileSource
 import scamr.mapreduce.{MapReduceJob, MapReducePipeline}
-
 
 object ExampleWordCountMapReduce extends MapReduceMain {
   override def run(conf: Configuration, args: Array[String]): Int = {
-    val inputDirs = List(args(0))
-    val outputDir = args(1)
+    val inputDirs = args.init
+    val outputDir = args.last
+    val combineInputFiles = conf.getBoolean("combine.input.files", false)
     val pipeline = MapReducePipeline.init(conf) -->  // hint: start by adding a data source with -->
-      new InputOutput.TextFileSource(inputDirs) -->  // hint: use --> to direct input into or out of a stage
+      // hint: use --> to direct input into or out of a stage
+      (if (combineInputFiles) new CombineTextFileSource(inputDirs) else new InputOutput.TextFileSource(inputDirs)) -->
       new MapReduceJob(mapper = classOf[WordCountMapper],
                        combiner = classOf[WordCountReducer],
                        reducer = classOf[WordCountReducer],
