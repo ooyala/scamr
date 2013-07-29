@@ -19,7 +19,7 @@ object SimpleMapper {
   val SimpleMapperClassProperty = "scamr.simple.mapper.class"
   val BindingModuleClassProperty = "scamr.mapper.subcut.binding.module.class"
 
-  def getRunnerClass[K1, V1, K2, V2] = classOf[Runner[K1, V1, K2, V2]]
+  def getRunnerClass[K1, V1, K2, V2]: Class[_ <: Mapper[K1, V1, K2, V2]] = classOf[Runner[K1, V1, K2, V2]]
 
   def setSimpleMapperClass[K1, V1, K2, V2](conf: Configuration, clazz: Class[_ <: SimpleMapper[K1, V1, K2, V2]]) {
     conf.setClass(SimpleMapperClassProperty, clazz, classOf[SimpleMapper[K1, V1, K2, V2]])
@@ -47,7 +47,8 @@ object SimpleMapper {
           val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
           if (bindingModuleClass == null) {
             throw new RuntimeException(
-              "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(BindingModuleClassProperty))
+              "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
+                BindingModuleClassProperty))
           }
           val bindingModule = try {
             bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
@@ -67,8 +68,8 @@ object SimpleMapper {
 
           // make this mapper's context and configuration available for injection
           mapper = bindingModule.modifyBindings { module =>
-            module.bind [MapContext[_, _, _, _]] toSingle context
-            module.bind [Configuration] toSingle context.getConfiguration
+            module.bind[MapContext[_, _, _, _]] toSingle context
+            module.bind[Configuration] toSingle context.getConfiguration
             constructor.newInstance(context, module)
           }
         } else {

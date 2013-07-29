@@ -81,14 +81,15 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
     confModifiers.foreach { _.apply(job.getConfiguration) }
   }
 
-  def this(mapper: MapperDef[K1, V1, K2, V2], combiner: CombinerDef[K2, V2], reducer: ReducerDef[K2, V2, K3, V3], name: String)
-          (implicit k2m: Manifest[K2], v2m: Manifest[V2], k3m: Manifest[K3], v3m: Manifest[V3]) =
+  def this(mapper: MapperDef[K1, V1, K2, V2], combiner: CombinerDef[K2, V2], reducer: ReducerDef[K2, V2, K3, V3],
+           name: String)(implicit k2m: Manifest[K2], v2m: Manifest[V2], k3m: Manifest[K3], v3m: Manifest[V3]) =
     this(mapper.mapperClass, combiner.combinerClass, reducer.reducerClass, name,
       mapper.confModifiers ::: combiner.confModifiers ::: reducer.confModifiers)(k2m, v2m, k3m, v3m)
 
   def this(mapper: MapperDef[K1, V1, K2, V2], reducer: ReducerDef[K2, V2, K3, V3], name: String)
           (implicit k2m: Manifest[K2], v2m: Manifest[V2], k3m: Manifest[K3], v3m: Manifest[V3]) =
-    this(mapper.mapperClass, None, reducer.reducerClass, name, mapper.confModifiers ::: reducer.confModifiers)(k2m, v2m, k3m, v3m)
+    this(mapper.mapperClass, None, reducer.reducerClass, name,
+         mapper.confModifiers ::: reducer.confModifiers)(k2m, v2m, k3m, v3m)
 }
 
 class MapOnlyJob[K1, V1, K2, V2] private

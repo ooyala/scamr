@@ -8,16 +8,17 @@ object ReducerDef {
   type SimpleInjectableClass[K2, V2, K3, V3] = Class[_ <: SimpleReducer[K2, V2, K3, V3] with Injectable]
 
   implicit def classicReducerToDef[K2, V2, K3, V3](classicReducer: Reducer[K2, V2, K3, V3])
-    (implicit k3m: Manifest[K3], v3m: Manifest[V3]) = new ClassicReducerDef(classicReducer)
+    (implicit k3m: Manifest[K3], v3m: Manifest[V3]): ReducerDef[K2, V2, K3, V3] = new ClassicReducerDef(classicReducer)
 
   implicit def injectableReducerClassToDef[K2, V2, K3, V3](clazz: SimpleInjectableClass[K2, V2, K3, V3])
-    (implicit k3m: Manifest[K3], v3m: Manifest[V3], bindingModule: BindingModule) = new InjectableReducerDef(clazz)
+    (implicit k3m: Manifest[K3], v3m: Manifest[V3], bindingModule: BindingModule): ReducerDef[K2, V2, K3, V3] =
+    new InjectableReducerDef(clazz)
 
   implicit def simpleReducerClassToDef[K2, V2, K3, V3](clazz: Class[_ <: SimpleReducer[K2, V2, K3, V3]])
-    (implicit k3m: Manifest[K3], v3m: Manifest[V3]) = new SimpleReducerDef(clazz)
+    (implicit k3m: Manifest[K3], v3m: Manifest[V3]): ReducerDef[K2, V2, K3, V3] = new SimpleReducerDef(clazz)
 
   implicit def lambdaReduceFunctionToDef[K2, V2, K3, V3](lambda: LambdaReducer[K2, V2, K3, V3]#FunctionType)
-    (implicit k3m: Manifest[K3], v3m: Manifest[V3]) = new LambdaReducerDef(lambda)
+    (implicit k3m: Manifest[K3], v3m: Manifest[V3]): ReducerDef[K2, V2, K3, V3] = new LambdaReducerDef(lambda)
 }
 
 trait ReducerDef[K2, V2, K3, V3] {

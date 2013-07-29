@@ -19,7 +19,7 @@ object SimpleReducer {
   val SimpleReducerClassProperty = "scamr.simple.reducer.class"
   val BindingModuleClassProperty = "scamr.reducer.subcut.binding.module.class"
 
-  def getRunnerClass[K1, V1, K2, V2] = classOf[Runner[K1, V1, K2, V2]]
+  def getRunnerClass[K1, V1, K2, V2]: Class[_ <: Reducer[K1, V1, K2, V2]] = classOf[Runner[K1, V1, K2, V2]]
 
   def setSimpleReducerClass[K1, V1, K2, V2](conf: Configuration, clazz: Class[_ <: SimpleReducer[K1, V1, K2, V2]]) {
     conf.setClass(SimpleReducerClassProperty, clazz, classOf[SimpleReducer[K1, V1, K2, V2]])
@@ -47,7 +47,8 @@ object SimpleReducer {
           val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
           if (bindingModuleClass == null) {
             throw new RuntimeException(
-              "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(BindingModuleClassProperty))
+              "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
+                BindingModuleClassProperty))
           }
           val bindingModule = try {
             bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
@@ -67,8 +68,8 @@ object SimpleReducer {
 
           // make this reducer's context and configuration available for injection
           reducer = bindingModule.modifyBindings { module =>
-            module.bind [ReduceContext[_, _, _, _]] toSingle context
-            module.bind [Configuration] toSingle context.getConfiguration
+            module.bind[ReduceContext[_, _, _, _]] toSingle context
+            module.bind[Configuration] toSingle context.getConfiguration
             constructor.newInstance(context, module)
           }
         } else {

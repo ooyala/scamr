@@ -1,7 +1,7 @@
 package scamr.mapreduce.lambda
 
-import org.apache.hadoop.mapreduce.MapContext
+import org.apache.hadoop.mapreduce.{InputSplit, MapContext}
 
 class LambdaMapContext(_context: MapContext[_, _, _, _]) extends BaseLambdaContext(_context) {
-  def getInputSplit = _context.getInputSplit
+  def getInputSplit: InputSplit = _context.getInputSplit
 }

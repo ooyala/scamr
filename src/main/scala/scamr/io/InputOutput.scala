@@ -4,7 +4,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.compress.{DefaultCodec, SnappyCodec, CompressionCodec}
 import org.apache.hadoop.io.{Writable, Text, LongWritable}
-import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueTextInputFormat, TextInputFormat, FileInputFormat}
+import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueTextInputFormat, TextInputFormat}
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output._
 import org.apache.hadoop.mapreduce.{OutputFormat, Job, InputFormat}
 
@@ -23,8 +24,8 @@ object InputOutput {
 
   // A base class for all Sources that read input from files.
   abstract class FileSource[K, V]
-      (override val inputFormatClass: Class[_ <: InputFormat[K, V]], val inputDirs: Iterable[String])
-      extends Source[K, V] {
+  (override val inputFormatClass: Class[_ <: InputFormat[K, V]], val inputDirs: Iterable[String])
+  extends Source[K, V] {
 
     override def configureInput(job: Job) {
       super.configureInput(job)
@@ -33,13 +34,13 @@ object InputOutput {
   }
 
   class TextFileSource(inputDirs: Iterable[String])
-      extends FileSource[LongWritable, Text](classOf[TextInputFormat], inputDirs)
+  extends FileSource[LongWritable, Text](classOf[TextInputFormat], inputDirs)
 
   class KeyValueTextFileSource(inputDirs: Iterable[String])
-      extends FileSource[Text, Text](classOf[KeyValueTextInputFormat], inputDirs)
+  extends FileSource[Text, Text](classOf[KeyValueTextInputFormat], inputDirs)
 
   class SequenceFileSource[K, V](inputDirs: Iterable[String])
-      extends FileSource[K, V](classOf[SequenceFileInputFormat[K, V]], inputDirs)
+  extends FileSource[K, V](classOf[SequenceFileInputFormat[K, V]], inputDirs)
 
   // A trait for output sinks
   trait Sink[K, V] {
@@ -60,9 +61,9 @@ object InputOutput {
 
   // A base class for all Sinks that write output to files.
   abstract class FileSink[K, V]
-      (override val outputFormatClass: Class[_ <: OutputFormat[K, V]], val outputDir: Path)
-      (implicit km: Manifest[K], vm: Manifest[V])
-      extends Sink[K, V] {
+  (override val outputFormatClass: Class[_ <: OutputFormat[K, V]], val outputDir: Path)
+  (implicit km: Manifest[K], vm: Manifest[V])
+  extends Sink[K, V] {
 
     def this(outputFormatClass: Class[_ <: OutputFormat[K, V]], outputDir: String)
             (implicit km: Manifest[K], vm: Manifest[V]) = this(outputFormatClass, new Path(outputDir))(km, vm)
@@ -83,17 +84,15 @@ object InputOutput {
   }
 
   class TextFileSink[K, V](outputDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
-      extends FileSink[K, V](classOf[TextOutputFormat[K, V]], outputDir) {
+  extends FileSink[K, V](classOf[TextOutputFormat[K, V]], outputDir) {
 
-    def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) =
-      this(new Path(outputDir))(km, vm)
+    def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) = this(new Path(outputDir))(km, vm)
   }
 
   class SequenceFileSink[K, V](outputDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
-      extends FileSink[K, V](classOf[SequenceFileOutputFormat[K, V]], outputDir) {
+  extends FileSink[K, V](classOf[SequenceFileOutputFormat[K, V]], outputDir) {
 
-    def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) =
-      this(new Path(outputDir))(km, vm)
+    def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) = this(new Path(outputDir))(km, vm)
   }
 
   // A trait for an IO object that's both a source and a sink. This is used to "glue" multi-stage MR
@@ -102,8 +101,9 @@ object InputOutput {
 
   abstract class FileLink[K, V](override val outputFormatClass: Class[_ <: OutputFormat[K, V]],
                                 override val inputFormatClass: Class[_ <: InputFormat[K, V]],
-                                val workingDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
-                                extends Link[K, V] {
+                                val workingDir: Path)
+                               (implicit km: Manifest[K], vm: Manifest[V])
+  extends Link[K, V] {
 
     // The key and value types must be Writable so they can be written to the intermediate sequence files.
     // Unfortunately this check happens at runtime rather than compile time. The reason is that we can't
@@ -164,7 +164,7 @@ object InputOutput {
   }
 
   class SequenceFileLink[K, V](workingDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
-      extends FileLink[K, V](classOf[SequenceFileOutputFormat[K, V]], classOf[SequenceFileInputFormat[K, V]], workingDir)
+  extends FileLink[K, V](classOf[SequenceFileOutputFormat[K, V]], classOf[SequenceFileInputFormat[K, V]], workingDir)
 
   def mustBeWritable[T](manifest: Manifest[T], messagePrefix: String) {
     val clazz = manifest.erasure.asInstanceOf[Class[T]]

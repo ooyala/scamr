@@ -8,16 +8,17 @@ object MapperDef {
   type SimpleInjectableClass[K1, V1, K2, V2] =  Class[_ <: SimpleMapper[K1, V1, K2, V2] with Injectable]
 
   implicit def classicMapperToDef[K1, V1, K2, V2](classicMapper: Mapper[K1, V1, K2, V2])
-    (implicit k2m: Manifest[K2], v2m: Manifest[V2]) = new ClassicMapperDef(classicMapper)
+    (implicit k2m: Manifest[K2], v2m: Manifest[V2]): MapperDef[K1, V1, K2, V2] = new ClassicMapperDef(classicMapper)
 
   implicit def injectableMapperClassToDef[K1, V1, K2, V2](clazz: SimpleInjectableClass[K1, V1, K2, V2])
-    (implicit k2m: Manifest[K2], v2m: Manifest[V2], bindingModule: BindingModule) = new InjectableMapperDef(clazz)
+    (implicit k2m: Manifest[K2], v2m: Manifest[V2], bindingModule: BindingModule): MapperDef[K1, V1, K2, V2] =
+    new InjectableMapperDef(clazz)
 
   implicit def simpleMapperClassToDef[K1, V1, K2, V2](clazz: Class[_ <: SimpleMapper[K1, V1, K2, V2]])
-    (implicit k2m: Manifest[K2], v2m: Manifest[V2]) = new SimpleMapperDef(clazz)
+    (implicit k2m: Manifest[K2], v2m: Manifest[V2]): MapperDef[K1, V1, K2, V2] = new SimpleMapperDef(clazz)
 
   implicit def lambdaMapFunctionToDef[K1, V1, K2, V2](lambda: LambdaMapper[K1, V1, K2, V2]#FunctionType)
-    (implicit k2m: Manifest[K2], v2m: Manifest[V2]) = new LambdaMapperDef(lambda)
+    (implicit k2m: Manifest[K2], v2m: Manifest[V2]): MapperDef[K1, V1, K2, V2] = new LambdaMapperDef(lambda)
 }
 
 trait MapperDef[K1, V1, K2, V2] {

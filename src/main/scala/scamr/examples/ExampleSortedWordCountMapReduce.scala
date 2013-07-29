@@ -20,14 +20,13 @@ extends Tuple2WritableComparable[LongWritable, Text](tuple) {
 
 class CombineCountAndWordIntoTupleMapper(context: MapContext[_, _, _, _])
 extends SimpleMapper[Text, LongWritable, LongAndTextWritableComparable, NullWritable](context) {
-  override def map(word: Text, count: LongWritable) =
+  override def map(word: Text, count: LongWritable): Unit =
     emit(new LongAndTextWritableComparable(count, word), NullWritable.get)
 }
 
 class OutputSortedCountsReducer(context: ReduceContext[_, _, _, _])
 extends SimpleReducer[LongAndTextWritableComparable, NullWritable, Text, LongWritable](context) {
-  override def reduce(key: LongAndTextWritableComparable, ignored: Iterator[NullWritable]) =
-    emit(key._2, key._1)
+  override def reduce(key: LongAndTextWritableComparable, ignored: Iterator[NullWritable]): Unit = emit(key._2, key._1)
 }
 
 // This example demonstrates a 2-stage MR pipeline which is like word count, but sorts the words according to the

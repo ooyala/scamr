@@ -8,17 +8,17 @@ import scamr.mapreduce.reducer.SimpleReducer
 object CombinerDef {
   type SimpleInjectableClass[K2, V2] = Class[_ <: SimpleReducer[K2, V2, K2, V2] with Injectable]
 
-  implicit def classicCombinerToDef[K2, V2](classicCombiner: Reducer[K2, V2, K2, V2]) =
+  implicit def classicCombinerToDef[K2, V2](classicCombiner: Reducer[K2, V2, K2, V2]): CombinerDef[K2, V2] =
     new ClassicCombinerDef(classicCombiner)
 
   implicit def injectableCombinerClassToDef[K2, V2](clazz: SimpleInjectableClass[K2, V2])
-                                                   (implicit bindingModule: BindingModule) =
+                                                   (implicit bindingModule: BindingModule): CombinerDef[K2, V2] =
     new InjectableCombinerDef(clazz)
 
-  implicit def simpleCombinerClassToDef[K2, V2](clazz: Class[_ <: SimpleReducer[K2, V2, K2, V2]]) =
-    new SimpleCombinerDef(clazz)
+  implicit def simpleCombinerClassToDef[K2, V2](
+      clazz: Class[_ <: SimpleReducer[K2, V2, K2, V2]]): CombinerDef[K2, V2] = new SimpleCombinerDef(clazz)
 
-  implicit def lambdaCombineFunctionToDef[K2, V2](lambda: LambdaCombiner[K2, V2]#FunctionType) =
+  implicit def lambdaCombineFunctionToDef[K2, V2](lambda: LambdaCombiner[K2, V2]#FunctionType): CombinerDef[K2, V2] =
     new LambdaCombinerDef(lambda)
 }
 

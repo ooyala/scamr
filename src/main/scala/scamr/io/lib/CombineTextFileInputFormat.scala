@@ -23,7 +23,8 @@ import org.apache.hadoop.util.LineReader
  * combined size of all files in any split is <= 64 MB.
  */
 class CombineTextFileInputFormat extends CombineFileInputFormat[FileNameWithOffset, Text] {
-  def createRecordReader(split: InputSplit, context: TaskAttemptContext): RecordReader[FileNameWithOffset, Text] =
+  override def createRecordReader(split: InputSplit,
+                                  context: TaskAttemptContext): RecordReader[FileNameWithOffset, Text] =
     new CombineFileRecordReader(split.asInstanceOf[CombineFileSplit], context, classOf[CombineFileLineRecordReader])
 
   override def isSplitable(context: JobContext, filename: Path): Boolean =
@@ -63,7 +64,7 @@ extends RecordReader[FileNameWithOffset, Text] {
     reader = null
   }
 
-  def initialize(split: InputSplit, ctx: TaskAttemptContext) {
+  override def initialize(split: InputSplit, ctx: TaskAttemptContext) {
     assert(split == this.inputSplit, "Wrong input split!")
     val fs = path.getFileSystem(conf)
     val fileIn = compressionCodec match {
@@ -88,22 +89,19 @@ extends RecordReader[FileNameWithOffset, Text] {
     }
   }
 
-  def nextKeyValue(): Boolean =
-    if (pos < end) {
-      key.offset = pos
-      val newSize = reader.readLine(value)
-      pos += newSize
-      newSize != 0  // if this is 0, we hit EOF
-    } else {
-      false
-    }
+  override def nextKeyValue(): Boolean = if (pos < end) {
+    key.offset = pos
+    val newSize = reader.readLine(value)
+    pos += newSize
+    newSize != 0  // if this is 0, we hit EOF
+  } else {
+    false
+  }
 
-  def getCurrentKey(): FileNameWithOffset = key
+  override def getCurrentKey: FileNameWithOffset = key
 
-  def getCurrentValue(): Text = value
+  override def getCurrentValue: Text = value
 
-  def getProgress(): Float = if (startOffset == end)
-    0.0f
-  else
-    math.min(1.0f, (pos - startOffset).toFloat / (end - startOffset))
+  override def getProgress: Float =
+    if (startOffset == end) 0.0f else math.min(1.0f, (pos - startOffset).toFloat / (end - startOffset))
 }

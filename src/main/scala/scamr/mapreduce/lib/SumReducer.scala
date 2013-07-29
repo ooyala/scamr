@@ -6,6 +6,6 @@ import scamr.mapreduce.reducer.SimpleReducer
 
 
 class SumReducer[K](context: ReduceContext[_,_,_,_]) extends SimpleReducer[K, LongWritable, K, LongWritable](context) {
-  override def reduce(word: K, counts: Iterator[LongWritable]) =
+  override def reduce(word: K, counts: Iterator[LongWritable]): Unit =
     emit(word, new LongWritable(counts.foldLeft(0L)((a, b) => a + b.get)))
 }

@@ -36,8 +36,8 @@ object MapReducePipeline {
   }
 
   // Initializes a new pipeline
-  def init(baseConfiguration: Configuration) = new InitialStage(baseConfiguration)
-  def init() = new InitialStage(new Configuration)
+  def init(baseConfiguration: Configuration): InitialStage = new InitialStage(baseConfiguration)
+  def init(): InitialStage = new InitialStage(new Configuration)
 
   // The only type that can be chained from an InitialStage is an InputOutput.Source which returns an
   // InputStage.
@@ -54,7 +54,7 @@ object MapReducePipeline {
 
     // Only JobStages really execute, everyone else just recurses to the previous stage in the chain.
     // The InitialStage always returns true.
-    override def execute() = true
+    override def execute(): Boolean = true
   }
 
   // The only type that can be chained from an InputStage is a JobStage that defines a MapReduce job which
@@ -71,7 +71,7 @@ object MapReducePipeline {
     }
 
     // Only JobStages really execute, everyone else just recurses to the previous stage in the chain
-    override def execute() = prev.execute()
+    override def execute(): Boolean = prev.execute()
   }
 
   // Two types can be chained from a JobStage which return a new stage:
@@ -132,8 +132,7 @@ object MapReducePipeline {
     override def execute(): Boolean = {
       var result = prev.execute()
       // TODO(ivmaykov): Throw an exception?
-      if (!result)
-        return false
+      if (!result) return false
 
       val job = createAndConfigureJob
       result = job.waitForCompletion(true)
@@ -141,7 +140,7 @@ object MapReducePipeline {
       // Tell our Sink that the output has been written, and whether we succeeded or not
       prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
       next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, result)
-      return result
+      result
     }
 
     // Configures this stage
@@ -177,7 +176,7 @@ object MapReducePipeline {
     }
 
     // Only JobStages really execute, everyone else just recurses to the previous stage in the chain
-    override def execute() = prev.execute()
+    override def execute(): Boolean = prev.execute()
 
     def cleanupWorkingDir(conf: Configuration) { link.cleanupWorkingDir(conf) }
   }
@@ -188,6 +187,6 @@ object MapReducePipeline {
     override val baseConfiguration = prev.baseConfiguration
 
     // Only JobStages really execute, everyone else just recurses to the previous stage in the chain
-    override def execute() = prev.execute()
+    override def execute(): Boolean = prev.execute()
   }
 }
