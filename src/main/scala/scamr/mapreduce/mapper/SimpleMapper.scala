@@ -42,36 +42,9 @@ object SimpleMapper {
       }
 
       try {
-        // True iff the mapper is using dependency injection w/ SubCut
         if (classOf[Injectable].isAssignableFrom(mapperClass)) {
-          val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
-          if (bindingModuleClass == null) {
-            throw new RuntimeException(
-              "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
-                BindingModuleClassProperty))
-          }
-          val bindingModule = try {
-            bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
-          } catch {
-            case e: NoSuchFieldException =>
-              throw new RuntimeException("Error creating Injectable SimpleMapper instance. " +
-                "Make sure that the SubCut binding module " + bindingModuleClass.getName +
-                " is a scala 'object', and is not nested inside a class.", e)
-          }
-          val constructor = try {
-            mapperClass.getConstructor(classOf[MapContext[K1, V1, K2, V2]], classOf[BindingModule])
-          } catch {
-            case e: NoSuchMethodException =>
-              throw new RuntimeException("Error creating Injectable SimpleMapper instance. " +
-                "Looks like you forgot to specify the BindingModule as an implicit constructor parameter!", e)
-          }
-
-          // make this mapper's context and configuration available for injection
-          mapper = bindingModule.modifyBindings { module =>
-            module.bind[MapContext[_, _, _, _]] toSingle context
-            module.bind[Configuration] toSingle context.getConfiguration
-            constructor.newInstance(context, module)
-          }
+          // True iff the mapper is using dependency injection w/ SubCut
+          mapper = createInjectable(context, mapperClass)
         } else {
           val constructor = mapperClass.getConstructor(classOf[MapContext[K1, V1, K2, V2]])
           mapper = constructor.newInstance(context)
@@ -84,6 +57,42 @@ object SimpleMapper {
         case e: IllegalAccessException =>
           throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)
       }
+    }
+
+    private def createInjectable(context: Mapper[K1, V1, K2, V2]#Context,
+                                 clazz: Class[_ <: SimpleMapper[K1, V1, K2, V2]]): SimpleMapper[K1, V1, K2, V2] = {
+      require(classOf[Injectable].isAssignableFrom(clazz), "Must extend the Injectable trait: " + clazz.getName)
+
+      val conf = context.getConfiguration
+      val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
+      if (bindingModuleClass == null) {
+        throw new RuntimeException(
+          "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
+            BindingModuleClassProperty))
+      }
+      val bindingModule = try {
+        bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
+      } catch {
+        case e: NoSuchFieldException =>
+          throw new RuntimeException("Error creating Injectable SimpleMapper instance. " +
+            "Make sure that the SubCut binding module " + bindingModuleClass.getName +
+            " is a scala 'object', and is not nested inside a class.", e)
+      }
+      val constructor = try {
+        clazz.getConstructor(classOf[MapContext[K1, V1, K2, V2]], classOf[BindingModule])
+      } catch {
+        case e: NoSuchMethodException =>
+          throw new RuntimeException("Error creating Injectable SimpleMapper instance. " +
+            "Looks like you forgot to specify the BindingModule as an implicit constructor parameter!", e)
+      }
+
+      // make this mapper's context and configuration available for injection
+      val result = bindingModule.modifyBindings { module =>
+        module.bind[MapContext[_, _, _, _]] toSingle context
+        module.bind[Configuration] toSingle context.getConfiguration
+        constructor.newInstance(context, module)
+      }
+      result
     }
 
     override def map(key: K1, value: V1, context: Mapper[K1, V1, K2, V2]#Context) {

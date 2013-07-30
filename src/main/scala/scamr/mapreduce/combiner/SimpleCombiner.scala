@@ -37,36 +37,9 @@ object SimpleCombiner {
       }
 
       try {
-        // True iff the combiner is using dependency injection w/ SubCut
         if (classOf[Injectable].isAssignableFrom(combinerClass)) {
-          val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
-          if (bindingModuleClass == null) {
-            throw new RuntimeException(
-              "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
-                BindingModuleClassProperty))
-          }
-          val bindingModule = try {
-            bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
-          } catch {
-            case e: NoSuchFieldException =>
-              throw new RuntimeException("Error creating Injectable SimpleCombiner instance. " +
-                "Make sure that the SubCut binding module " + bindingModuleClass.getName +
-                " is a scala 'object', and is not nested inside a class.", e)
-          }
-          val constructor = try {
-            combinerClass.getConstructor(classOf[ReduceContext[K, V, K, V]], classOf[BindingModule])
-          } catch {
-            case e: NoSuchMethodException =>
-              throw new RuntimeException("Error creating Injectable SimpleCombiner instance. " +
-                "Looks like you forgot to specify the BindingModule as an implicit constructor parameter!", e)
-          }
-
-          // make this combiner's context and configuration available for injection
-          combiner = bindingModule.modifyBindings { module =>
-            module.bind[ReduceContext[_, _, _, _]] toSingle context
-            module.bind[Configuration] toSingle context.getConfiguration
-            constructor.newInstance(context, module)
-          }
+          // True iff the combiner is using dependency injection w/ SubCut
+          combiner = createInjectable(context, combinerClass)
         } else {
           val constructor = combinerClass.getConstructor(classOf[ReduceContext[K, V, K, V]])
           combiner = constructor.newInstance(context)
@@ -79,6 +52,42 @@ object SimpleCombiner {
         case e: IllegalAccessException =>
           throw new RuntimeException("Error creating SimpleCombiner instance: " + e.getMessage, e)
       }
+    }
+
+    private def createInjectable(context: Reducer[K, V, K, V]#Context,
+                                 clazz: Class[_ <: SimpleReducer[K, V, K, V]]): SimpleReducer[K, V, K, V] = {
+      require(classOf[Injectable].isAssignableFrom(clazz), "Must extend the Injectable trait: " + clazz.getName)
+
+      val conf = context.getConfiguration
+      val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
+      if (bindingModuleClass == null) {
+        throw new RuntimeException(
+          "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
+            BindingModuleClassProperty))
+      }
+      val bindingModule = try {
+        bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
+      } catch {
+        case e: NoSuchFieldException =>
+          throw new RuntimeException("Error creating Injectable SimpleCombiner instance. " +
+            "Make sure that the SubCut binding module " + bindingModuleClass.getName +
+            " is a scala 'object', and is not nested inside a class.", e)
+      }
+      val constructor = try {
+        clazz.getConstructor(classOf[ReduceContext[K, V, K, V]], classOf[BindingModule])
+      } catch {
+        case e: NoSuchMethodException =>
+          throw new RuntimeException("Error creating Injectable SimpleCombiner instance. " +
+            "Looks like you forgot to specify the BindingModule as an implicit constructor parameter!", e)
+      }
+
+      // make this combiner's context and configuration available for injection
+      val result = bindingModule.modifyBindings { module =>
+        module.bind[ReduceContext[_, _, _, _]] toSingle context
+        module.bind[Configuration] toSingle context.getConfiguration
+        constructor.newInstance(context, module)
+      }
+      result
     }
 
     override def reduce(key: K, values: java.lang.Iterable[V], context: Reducer[K, V, K, V]#Context) {
