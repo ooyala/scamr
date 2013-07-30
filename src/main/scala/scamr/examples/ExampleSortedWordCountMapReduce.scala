@@ -37,8 +37,8 @@ extends SimpleReducer[LongAndTextWritableComparable, NullWritable, Text, LongWri
 // Stage 2 reducer breaks the tuple back into a word and count and outputs them.
 object ExampleSortedWordCountMapReduce extends MapReduceMain {
   override def run(conf: Configuration, args: Array[String]): Int = {
-    val inputDirs = List(args(0))
-    val outputDir = args(1)
+    val inputDirs = args.init
+    val outputDir = args.last
     val pipeline = MapReducePipeline.init(conf) -->  // hint: start by adding a data source with -->
       new InputOutput.TextFileSource(inputDirs) --> // hint: use --> to direct data into or out of a stage
       new MapReduceJob(classOf[WordCountMapper], classOf[WordCountReducer], classOf[WordCountReducer],
