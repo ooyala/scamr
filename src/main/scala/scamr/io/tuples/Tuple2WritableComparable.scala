@@ -27,7 +27,7 @@ with WritableComparable[Tuple2WritableComparable[A, B]] {
     if (cmp1 != 0) cmp1 else this.tuple._2.asInstanceOf[Comparable[B]].compareTo(that.tuple._2)
   }
 
-  override def hashCode(): Int = tuple.hashCode
+  override def hashCode(): Int = tuple.hashCode()
 
   override def equals(that: Any): Boolean =
     if (this.eq(that.asInstanceOf[AnyRef])) {
@@ -42,5 +42,5 @@ with WritableComparable[Tuple2WritableComparable[A, B]] {
       }
     }
 
-  override def toString: String = tuple.toString
+  override def toString: String = tuple.toString()
 }

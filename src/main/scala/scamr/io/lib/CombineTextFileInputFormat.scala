@@ -41,7 +41,7 @@ extends RecordReader[FileNameWithOffset, Text] {
   // offset of the chunk
   protected var startOffset = inputSplit.getOffset(index)
   // end of the chunk
-  protected val end = if (compressionCodec.isDefined) Long.MaxValue else (startOffset + inputSplit.getLength(index))
+  protected val end = if (compressionCodec.isDefined) Long.MaxValue else startOffset + inputSplit.getLength(index)
   // current position
   protected var pos = startOffset
 
@@ -77,14 +77,14 @@ extends RecordReader[FileNameWithOffset, Text] {
 
     val recordDelimiterBytes: Option[Array[Byte]] = Option(conf.get("textinputformat.record.delimiter")) match {
       case None => None
-      case Some(delimeterString) => Some(delimeterString.getBytes())
+      case Some(delimeterString) => Some(delimeterString.getBytes)
     }
     reader = recordDelimiterBytes match {
       case Some(bytes) => new LineReader(fileIn, conf, bytes)
       case None => new LineReader(fileIn, conf)
     }
     if (skipFirstLine) {
-      startOffset += reader.readLine(new Text(), 0, math.min(Int.MaxValue.toLong, (end - startOffset)).toInt)
+      startOffset += reader.readLine(new Text(), 0, math.min(Int.MaxValue.toLong, end - startOffset).toInt)
       pos = startOffset
     }
   }

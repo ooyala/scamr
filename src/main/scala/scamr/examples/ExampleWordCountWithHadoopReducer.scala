@@ -16,14 +16,12 @@ import scamr.mapreduce.{MapReducePipeline, MapReduceJob}
  * by using a mapper and reducer which ship with the hadoop distribution.
  */
 object ExampleWordCountWithHadoopReducer extends MapReduceMain {
-  class HadoopWordCountReducer extends IntSumReducer[Text]
-
   override def run(conf: Configuration, args: Array[String]): Int = {
     val inputDirs = List(args(0))
     val outputDir = args(1)
     val pipeline = MapReducePipeline.init(conf) -->  // hint: start by adding a data source with -->
       new InputOutput.TextFileSource(inputDirs) -->  // hint: use --> to direct input into or out of a stage
-      new MapReduceJob(new TokenCounterMapper(), new HadoopWordCountReducer(), new HadoopWordCountReducer(),
+      new MapReduceJob(new TokenCounterMapper, new IntSumReducer[Text], new IntSumReducer[Text],
         "ScaMR word count example - Java API") ++
       ConfigureSpeculativeExecution(false, false) ++  // hint: use ++ to add (Conf|Job)Modifiers to a TaskStage
       LambdaJobModifier { _.setNumReduceTasks(1) } -->

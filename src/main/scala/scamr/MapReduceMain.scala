@@ -5,7 +5,7 @@ import org.apache.hadoop.util.{ToolRunner, Tool}
 
 abstract class MapReduceMain extends Configured with Tool {
   def main(args: Array[String]): Unit = ToolRunner.run(this, args) match {
-    case errorCode if (errorCode != 0) => throw new RuntimeException("Failed with exit code " + errorCode)
+    case errorCode if errorCode != 0 => throw new RuntimeException("Failed with exit code " + errorCode)
     case _ =>
   }
 
