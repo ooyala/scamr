@@ -8,6 +8,7 @@ import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFormat, KeyValueT
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output._
 import org.apache.hadoop.mapreduce.{OutputFormat, Job, InputFormat}
+import scamr.conf.HadoopVersionSpecific
 
 object InputOutput {
   // A trait for input sources
@@ -122,7 +123,7 @@ object InputOutput {
       // run faster and use less disk space in basically every case, with no negative side effects.
       // However, only do so if the snappy native libraries are loaded.
       val conf = producerJob.getConfiguration
-      val defaultCodec = if (SnappyCodec.isNativeSnappyLoaded(conf)) {
+      val defaultCodec = if (HadoopVersionSpecific.isNativeSnappyLoaded(conf)) {
         // Prefer the SnappyCodec if the Snappy native libraries are loaded ...
         classOf[SnappyCodec]
       } else {
@@ -137,11 +138,11 @@ object InputOutput {
       val codecClass = conf.getClass("scamr.interstage.compression.codec", defaultCodec, classOf[CompressionCodec])
 
       if (codecClass != classOf[NullCompressionCodec]) {
-        conf.setBoolean("mapred.output.compress", true)
-        conf.set("mapred.output.compression.type", "BLOCK")
-        conf.setClass("mapred.output.compression.codec", codecClass, classOf[CompressionCodec])
+        conf.setBoolean(HadoopVersionSpecific.ConfKeys.CompressOutput, true)
+        conf.set(HadoopVersionSpecific.ConfKeys.OutputCompressionType, "BLOCK")
+        conf.setClass(HadoopVersionSpecific.ConfKeys.OutputCompressionCodec, codecClass, classOf[CompressionCodec])
       } else {
-        conf.setBoolean("mapred.output.compress", false)
+        conf.setBoolean(HadoopVersionSpecific.ConfKeys.CompressOutput, false)
       }
     }
 

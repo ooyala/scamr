@@ -2,7 +2,7 @@ package scamr.mapreduce
 
 import org.apache.hadoop.io.compress.{DefaultCodec, CompressionCodec, SnappyCodec}
 import org.apache.hadoop.mapreduce.{Reducer, Mapper, Job}
-import scamr.conf.{ConfModifier, LambdaConfModifier}
+import scamr.conf.{HadoopVersionSpecific, ConfModifier, LambdaConfModifier}
 import scamr.io.NullCompressionCodec
 import scamr.mapreduce.combiner.CombinerDef
 import scamr.mapreduce.mapper.MapperDef
@@ -32,7 +32,7 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
 
   val confModifiers = if (reducerClass != None) {
     LambdaConfModifier { conf =>
-      val defaultCodec = if (SnappyCodec.isNativeSnappyLoaded(conf)) {
+      val defaultCodec = if (HadoopVersionSpecific.isNativeSnappyLoaded(conf)) {
         // Prefer the SnappyCodec if the Snappy native libraries are loaded ...
         classOf[SnappyCodec]
       } else {
@@ -47,9 +47,9 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
       val codecClass = conf.getClass("scamr.intermediate.compression.codec", defaultCodec, classOf[CompressionCodec])
 
       if (codecClass != classOf[NullCompressionCodec]) {
-        conf.setBoolean("mapred.compress.map.output", true)
-        conf.set("mapred.map.output.compression.type", "BLOCK")
-        conf.setClass("mapred.map.output.compression.codec", codecClass, classOf[CompressionCodec])
+        conf.setBoolean(HadoopVersionSpecific.ConfKeys.CompressMapOutput, true)
+        conf.set(HadoopVersionSpecific.ConfKeys.MapOutputCompressionType, "BLOCK")
+        conf.setClass(HadoopVersionSpecific.ConfKeys.MapOutputCompressionCodec, codecClass, classOf[CompressionCodec])
       } else {
         conf.setBoolean("mapred.compress.map.output", false)
       }
