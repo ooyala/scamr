@@ -36,6 +36,7 @@ libraryDependencies <+= (scalaVersion) {
 libraryDependencies <+= (version) {
   case v if v.contains("cdh3") => "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u4" % "provided"
   case v if v.contains("cdh4") => "org.apache.hadoop" % "hadoop-client" % "2.0.0-mr1-cdh4.4.0" % "provided"
+  case v if v.contains("cdh5") => "org.apache.hadoop" % "hadoop-client" % "2.2.0-cdh5.0.0-beta-1" % "provided"
 }
 
 // This is to prevent error [java.lang.OutOfMemoryError: PermGen space]
