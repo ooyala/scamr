@@ -8,9 +8,9 @@ name := "scamr"
 // $(NEXT_VERSION)-SNAPSHOT afterwards!
 version := "0.3.2-cdh5-SNAPSHOT"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.10.4"
 
-crossScalaVersions := Seq("2.9.1", "2.9.2", "2.9.3", "2.10.3")
+crossScalaVersions := Seq("2.9.1", "2.9.2", "2.9.3", "2.10.4")
 
 // The hadoop artifact needs access to Cloudera's maven repo
 resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
