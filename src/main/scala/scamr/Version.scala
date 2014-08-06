@@ -37,7 +37,7 @@ trait VersionGroup {
 object Version extends Version {
   // TODO(ivmaykov): Figure out if it's possible to auto-generate this file from build.sbt or version.sbt
   // Specifically, this value needs to be set by the sbt-release plugin and everything else should remain as-is.
-  override val versionString = "0.3.2-cdh5"
+  override val versionString = "0.3.3-cdh5-SNAPSHOT"
 
   def apply(): String = versionString
   override def toString = versionString
