@@ -19,9 +19,14 @@ abstract class MapReduceMain extends Configured with Tool {
 
   override final def run(args: Array[String]): Int = {
     val configuration = getConf
-    if (configuration.getBoolean("scamr.local.mode", false)) {
+    val isLocalMode = configuration.getBoolean("scamr.local.mode", false)
+    if (isLocalMode) {
       configuration.set("mapred.job.tracker", "local")
       configuration.set(HadoopVersionSpecific.ConfKeys.DefaultFilesystem, "file:///")
+      configuration.get("mapreduce.framework.name", "") match {
+        case str if str.nonEmpty => configuration.set("mapreduce.framework.name", "local")
+        case _ =>
+      }
     }
     run(configuration, args)
   }
