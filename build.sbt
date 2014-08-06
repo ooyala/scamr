@@ -34,9 +34,9 @@ libraryDependencies <+= (scalaVersion) {
 // to mark it as "provided" as well.
 // That way, 'sbt assembly' will not include all of hadoop's dependencies into your fat jar.
 libraryDependencies <+= (version) {
-  case v if v.contains("cdh3") => "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u4" % "provided"
+  case v if v.contains("cdh3") => "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u6" % "provided"
   case v if v.contains("cdh4") => "org.apache.hadoop" % "hadoop-client" % "2.0.0-mr1-cdh4.4.0" % "provided"
-  case v if v.contains("cdh5") => "org.apache.hadoop" % "hadoop-client" % "2.2.0-cdh5.0.0-beta-1" % "provided"
+  case v if v.contains("cdh5") => "org.apache.hadoop" % "hadoop-client" % "2.3.0-cdh5.1.0" % "provided"
 }
 
 // This is to prevent error [java.lang.OutOfMemoryError: PermGen space]
