@@ -2,12 +2,19 @@ package scamr
 
 import org.apache.hadoop.conf.{Configuration, Configured}
 import org.apache.hadoop.util.{ToolRunner, Tool}
+import org.apache.log4j.Logger
 import scamr.conf.HadoopVersionSpecific
 
 abstract class MapReduceMain extends Configured with Tool {
-  def main(args: Array[String]): Unit = ToolRunner.run(this, args) match {
-    case errorCode if errorCode != 0 => throw new RuntimeException("Failed with exit code " + errorCode)
-    case _ =>
+  val logger = Logger.getLogger(this.getClass)
+
+  def main(args: Array[String]): Unit = try {
+    ToolRunner.run(this, args) match {
+      case errorCode if errorCode != 0 =>
+        logger.error("failed with error code: " + errorCode)
+        System.exit(errorCode)
+      case _ => System.exit(0)
+    }
   }
 
   override final def run(args: Array[String]): Int = {
