@@ -75,8 +75,8 @@ object InputOutput {
     // take non-Writable key/value types and store them outside of HDFS using their own storage mechanism.
     // Although this check happens at runtime, at least it happens during the job configuration stage, before
     // any jobs are launched.
-    mustBeWritable(km, "Key class")
-    mustBeWritable(vm, "Value class")
+    // mustBeWritable(km, "Key class")
+    // mustBeWritable(vm, "Value class")
 
     override def configureOutput(job: Job) {
       super.configureOutput(job)
