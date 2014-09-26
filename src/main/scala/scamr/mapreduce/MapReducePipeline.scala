@@ -4,6 +4,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileUtil, FileSystem, Path}
 import org.apache.hadoop.mapreduce.{Counter, CounterGroup, Job}
 import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
+import scamr.io.InputOutput.FileLink
 import scamr.io.{InputOutputUtils, InputOutput}
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
@@ -112,9 +113,9 @@ object MapReducePipeline {
     // wrapping them in a 0-ary closure.
     def -->(sinkGenerator: () => InputOutput.Sink[K2, V2]): MapReducePipeline = this --> sinkGenerator()
 
-    def -->[K3, V3](nextJob: MapReduceJob[K2, V2, _, _, K3, V3])
+    def -->[K3, V3](nextJob: MapReduceJob[K2, V2, _, _, K3, V3], link: Option[FileLink[K2, V2]] = None)
                    (implicit k3m: Manifest[K3], v3m: Manifest[V3]): JobStage[K2, V2, K3, V3] = {
-      val nextStage = new LinkStage[K2, V2](this, workingDir)(k2m, v2m)
+      val nextStage = new LinkStage[K2, V2](this, workingDir, link)(k2m, v2m)
       this.next = nextStage
       nextStage --> nextJob
     }
@@ -175,12 +176,15 @@ object MapReducePipeline {
     }
   }
 
-  class LinkStage[K, V](previous: Stage[_, _, K, V], val workingDir: Path)
+  class LinkStage[K, V](previous: Stage[_, _, K, V], val workingDir: Path, fileLink: Option[FileLink[K, V]] = None)
                        (implicit km: Manifest[K], vm: Manifest[V])
   extends Stage[K, V, K, V] with SourceLike[K, V] with SinkLike[K, V] {
 
     override val prev = previous.asInstanceOf[Stage[_, _, _ <: K, V]]
-    private val link = new InputOutput.SequenceFileLink[K, V](workingDir)
+    private val link: FileLink[K, V] = fileLink match {
+      case None => new InputOutput.SequenceFileLink[K, V](workingDir)
+      case Some(l) => l
+    }
     override val sink: InputOutput.Sink[K, V] = link
     override val source: InputOutput.Source[K, V] = link
     override val baseConfiguration = prev.baseConfiguration
