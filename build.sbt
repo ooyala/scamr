@@ -6,7 +6,7 @@ name := "scamr"
 
 // Remove -SNAPSHOT from the version before publishing a release. Don't forget to change the version to
 // $(NEXT_VERSION)-SNAPSHOT afterwards!
-version := "0.3.3-cdh5-SNAPSHOT"
+version := "0.3.4-cdh5-delphi"
 
 scalaVersion := "2.10.4"
 
@@ -17,7 +17,8 @@ resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/ar
 
 libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.3",
-  "org.joda" % "joda-convert" % "1.5"
+  "org.joda" % "joda-convert" % "1.5",
+  "com.lambdaworks" %% "jacks" % "2.1.4"
 )
 
 // Subcut 2.9.3 is not there, so use 2.9.2 version for 2.9.3 and hope it works.

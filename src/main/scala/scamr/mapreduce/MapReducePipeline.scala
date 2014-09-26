@@ -1,16 +1,25 @@
 package scamr.mapreduce
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.fs.{FileUtil, FileSystem, Path}
+import org.apache.hadoop.mapreduce.{Counter, CounterGroup, Job}
 import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
 import scamr.io.{InputOutputUtils, InputOutput}
+import org.apache.log4j.Logger
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+import com.lambdaworks.jacks.JacksMapper
+import scala.collection.mutable
+import scamr.mapreduce.util.MetadataWriter
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
   def execute(): Boolean = pipeline.execute()
 }
 
 object MapReducePipeline {
+
+  import scala.collection.JavaConversions._
+
   trait Stage[K1, V1, K2, V2] {
     val prev: Stage[_, _, _ <: K1, V1]
     var next: Stage[_ >: K2, V2, _, _] = _
@@ -84,6 +93,8 @@ object MapReducePipeline {
                                  override val scamrJob: MapReduceJob[K1, V1, _, _, K2, V2])
                                 (implicit val k2m: Manifest[K2], v2m: Manifest[V2])
   extends Stage[K1, V1, K2, V2] with JobLike[K1, V1, K2, V2] {
+    val logger = Logger.getLogger(this.getClass)
+
     override val baseConfiguration = prev.baseConfiguration
 
     protected var confModifiers: List[ConfModifier] = List()
@@ -136,6 +147,12 @@ object MapReducePipeline {
 
       val job = createAndConfigureJob
       result = job.waitForCompletion(true)
+
+      // Keep a copy of the job history in the target directory
+      if (result && job.getConfiguration.getBoolean("scamr.metadata.write", false)) {
+        MetadataWriter.writeMetadata(job)
+      }
+
       // Tell our Source that the input has been read, and whether we succeeded or not
       // Tell our Sink that the output has been written, and whether we succeeded or not
       prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
