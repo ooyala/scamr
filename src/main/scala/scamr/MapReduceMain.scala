@@ -23,10 +23,7 @@ abstract class MapReduceMain extends Configured with Tool {
     if (isLocalMode) {
       configuration.set("mapred.job.tracker", "local")
       configuration.set(HadoopVersionSpecific.ConfKeys.DefaultFilesystem, "file:///")
-      configuration.get("mapreduce.framework.name", "") match {
-        case str if str.nonEmpty => configuration.set("mapreduce.framework.name", "local")
-        case _ =>
-      }
+      configuration.set("mapreduce.framework.name", "local")
     }
     run(configuration, args)
   }
