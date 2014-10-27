@@ -72,5 +72,5 @@ object InputOutputUtils {
 
   def fullyQualifiedPath(path: String, fs: FileSystem): Path = fullyQualifiedPath(new Path(path), fs)
 
-  def fullyQualifiedPath(path: Path, fs: FileSystem): Path = path.makeQualified(fs)
+  def fullyQualifiedPath(path: Path, fs: FileSystem): Path = path.makeQualified(fs.getUri, fs.getWorkingDirectory)
 }

@@ -6,7 +6,7 @@ This project was heavily influenced by [ScalaHadoop](https://github.com/bsdfish/
 
 The LambdaMapper / LambdaReducer code was heavily influenced by Jonathan Clark's [Scadoop project](https://github.com/jhclark/scadoop "scadoop").
 
-ScaMR has been tested with, and compiles against, [Scala 2.9.1 final](http://www.scala-lang.org/node/10780 "Scala 2.9.1.final") and [Cloudera's CDH3u1 hadoop distribution](http://www.cloudera.com/blog/2011/07/cdh3u1-released/ "Cloudera's CDH3u1").
+ScaMR has been tested with, and compiles against, Scala 2.10.4 and Cloudera's CDH5.1.0 hadoop distribution.
 
 # Overview
 
