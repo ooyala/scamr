@@ -167,10 +167,9 @@ object InputOutput {
   extends FileLink[K, V](classOf[SequenceFileOutputFormat[K, V]], classOf[SequenceFileInputFormat[K, V]], workingDir)
 
   def mustBeWritable[T](manifest: Manifest[T], messagePrefix: String) {
-    val clazz = manifest.erasure.asInstanceOf[Class[T]]
+    val clazz = manifest.runtimeClass.asInstanceOf[Class[T]]
     if (!classOf[Writable].isAssignableFrom(clazz)) {
-      throw new RuntimeException(
-        "%s: %s is not a subclass of org.apache.hadoop.io.Writable!".format(messagePrefix, clazz.toString))
+      throw new RuntimeException(s"$messagePrefix: $clazz is not a subclass of org.apache.hadoop.io.Writable!")
     }
   }
 }

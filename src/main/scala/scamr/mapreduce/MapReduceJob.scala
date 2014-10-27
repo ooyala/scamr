@@ -66,13 +66,13 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
 
     if (reducerClass != None) {
       job.setReducerClass(reducerClass.get)
-      job.setMapOutputKeyClass(mapOutputKeyType.erasure.asInstanceOf[Class[K2]])
-      job.setMapOutputValueClass(mapOutputValueType.erasure.asInstanceOf[Class[V2]])
-      job.setOutputKeyClass(outputKeyType.erasure.asInstanceOf[Class[K3]])
-      job.setOutputValueClass(outputValueType.erasure.asInstanceOf[Class[V3]])
+      job.setMapOutputKeyClass(mapOutputKeyType.runtimeClass.asInstanceOf[Class[K2]])
+      job.setMapOutputValueClass(mapOutputValueType.runtimeClass.asInstanceOf[Class[V2]])
+      job.setOutputKeyClass(outputKeyType.runtimeClass.asInstanceOf[Class[K3]])
+      job.setOutputValueClass(outputValueType.runtimeClass.asInstanceOf[Class[V3]])
     } else {
-      job.setOutputKeyClass(mapOutputKeyType.erasure.asInstanceOf[Class[K2]])
-      job.setOutputValueClass(mapOutputValueType.erasure.asInstanceOf[Class[V2]])
+      job.setOutputKeyClass(mapOutputKeyType.runtimeClass.asInstanceOf[Class[K2]])
+      job.setOutputValueClass(mapOutputValueType.runtimeClass.asInstanceOf[Class[V2]])
       job.setNumReduceTasks(0)
     }
 

@@ -10,7 +10,7 @@ version := "0.3.3-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
-crossScalaVersions := Seq("2.9.1", "2.9.2", "2.9.3", "2.10.4")
+crossScalaVersions := Seq("2.10.4", "2.11.2")
 
 // The hadoop artifact needs access to Cloudera's maven repo
 resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
@@ -30,12 +30,14 @@ libraryDependencies ++= Seq(
 // Subcut 2.9.3 is not there, so use 2.9.2 version for 2.9.3 and hope it works.
 libraryDependencies <+= (scalaVersion) {
   case "2.9.3" => "com.escalatesoft.subcut" % "subcut_2.9.2" % "2.0"
-  case _ => "com.escalatesoft.subcut" %% "subcut" % "2.0"
+  case _ => "com.escalatesoft.subcut" %% "subcut" % "2.1"
 }
 
 
 // This is to prevent error [java.lang.OutOfMemoryError: PermGen space]
 javaOptions ++= Seq("-XX:MaxPermSize=1024m", "-Xmx2048m")
+
+scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 // Note: to run the scamr examples, build a "fat jar" with sbt assembly.
 // Then run the examples with the jar at target/scala-<scala version>/scamr-assembly-<scamr version>.jar

@@ -12,7 +12,7 @@ abstract class MapReduceMain extends Configured with Tool {
   def main(args: Array[String]): Unit = {
     ToolRunner.run(this, args) match {
       case errorCode if errorCode != 0 =>
-        logger.error("failed with error code: " + errorCode)
+        logger.error(s"failed with error code: ${errorCode}")
         System.exit(errorCode)
       case _ => System.exit(0)
     }

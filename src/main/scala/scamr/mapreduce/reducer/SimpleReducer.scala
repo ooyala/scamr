@@ -37,8 +37,7 @@ object SimpleReducer {
       val reducerClass = conf.getClass(SimpleReducerClassProperty, null, classOf[SimpleReducer[K1, V1, K2, V2]])
       if (reducerClass == null) {
         throw new RuntimeException(
-          "Cannot resolve concrete subclass of SimpleReducer! Make sure the '%s' property is set!".format(
-            SimpleReducerClassProperty))
+          s"Cannot resolve concrete subclass of SimpleReducer! Make sure the '$SimpleReducerClassProperty' property is set!")
       }
 
       try {
@@ -51,32 +50,31 @@ object SimpleReducer {
         }
       } catch {
         case e: InvocationTargetException =>
-          throw new RuntimeException("Error creating SimpleReducer instance: " + e.getMessage, e)
+          throw new RuntimeException(s"Error creating SimpleReducer instance: ${e.getMessage}", e)
         case e: InstantiationException =>
-          throw new RuntimeException("Error creating SimpleReducer instance: " + e.getMessage, e)
+          throw new RuntimeException(s"Error creating SimpleReducer instance: ${e.getMessage}", e)
         case e: IllegalAccessException =>
-          throw new RuntimeException("Error creating SimpleReducer instance: " + e.getMessage, e)
+          throw new RuntimeException(s"Error creating SimpleReducer instance: ${e.getMessage}", e)
       }
     }
 
     private def createInjectable(context: Reducer[K1, V1, K2, V2]#Context,
                                  clazz: Class[_ <: SimpleReducer[K1, V1, K2, V2]]): SimpleReducer[K1, V1, K2, V2] = {
-      require(classOf[Injectable].isAssignableFrom(clazz), "Must extend the Injectable trait: " + clazz.getName)
+      require(classOf[Injectable].isAssignableFrom(clazz), s"Must extend the Injectable trait: ${clazz.getName}")
 
       val conf = context.getConfiguration
       val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
       if (bindingModuleClass == null) {
         throw new RuntimeException(
-          "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
-            BindingModuleClassProperty))
+          s"Cannot resolve SubCut binding module! Make sure the '$BindingModuleClassProperty' property is set!")
       }
       val bindingModule = try {
         bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
       } catch {
         case e: NoSuchFieldException =>
           throw new RuntimeException("Error creating Injectable SimpleReducer instance. " +
-            "Make sure that the SubCut binding module " + bindingModuleClass.getName +
-            " is a scala 'object', and is not nested inside a class.", e)
+            s"Make sure that the SubCut binding module ${bindingModuleClass.getName} " +
+            "is a scala 'object', and is not nested inside a class.", e)
       }
       val constructor = try {
         clazz.getConstructor(classOf[ReduceContext[K1, V1, K2, V2]], classOf[BindingModule])

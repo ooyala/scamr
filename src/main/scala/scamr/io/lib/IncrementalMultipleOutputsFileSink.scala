@@ -62,8 +62,8 @@ class IncrementalMultipleOutputsFileSink[K, V](
 
     FileOutputFormat.setOutputPath(job, workingDir)
 
-    val keyClass = km.erasure.asInstanceOf[Class[K]]
-    val valueClass = vm.erasure.asInstanceOf[Class[V]]
+    val keyClass = km.runtimeClass.asInstanceOf[Class[K]]
+    val valueClass = vm.runtimeClass.asInstanceOf[Class[V]]
 
     // If all output format classes are the same, then we can wrap in a LazyOutputFormat and avoid creating
     // empty output files. If they are not all the same, then we have to use the output formats directly.
@@ -96,7 +96,7 @@ class IncrementalMultipleOutputsFileSink[K, V](
         def accept(path: Path): Boolean = path.getName != "_SUCCESS" && path.getName != "_logs"
       }
       // Find all source files and directories in workingDir.
-      val (sourceDirs, sourceFiles) = InputOutputUtils.listRecursive(workingDir, fs, pathFilter).partition { _.isDir }
+      val (sourceDirs, sourceFiles) = InputOutputUtils.listRecursive(workingDir, fs, pathFilter).partition { _.isDirectory }
 
       // Find the unique parent directories of all leaf files in the output. We can use FileSystem.mkdirs() to
       // recursively create the same relative paths in the outputDir.
@@ -109,7 +109,7 @@ class IncrementalMultipleOutputsFileSink[K, V](
         val relativePath = new Path(workingDir.toUri.relativize(sourcePath.toUri))
         val destinationPath = new Path(outputDir, relativePath)
         if (!fs.mkdirs(destinationPath, sourceFileStatus.getPermission)) {
-          throw new IOException("mkdir failed: " + destinationPath.toUri.toString)
+          throw new IOException(s"mkdir failed: ${destinationPath.toUri}")
         }
       }
 
@@ -123,7 +123,7 @@ class IncrementalMultipleOutputsFileSink[K, V](
         val relativePath = new Path(workingDir.toUri.relativize(sourcePath.toUri))
         val destPath = new Path(outputDir, relativePath)
         if (!fs.rename(sourcePath, destPath)) {
-          throw new IOException("move failed: " + sourcePath.toUri.toString + " -> " + destPath.toUri.toString)
+          throw new IOException(s"move failed: ${sourcePath.toUri} -> ${destPath.toUri}")
         }
       }
       // Finally, delete the intermediate working directory

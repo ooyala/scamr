@@ -123,7 +123,7 @@ object MapReducePipeline {
         modifier match {
           case confModifier: ConfModifier => confModifiers = confModifier :: confModifiers
           case jobModifier: JobModifier => jobModifiers = jobModifier :: jobModifiers
-          case _ => throw new IllegalArgumentException("Invalid modifier class: " + modifier.getClass.toString)
+          case _ => throw new IllegalArgumentException(s"Invalid modifier class: ${modifier.getClass}")
         }
       }
       this
@@ -147,7 +147,7 @@ object MapReducePipeline {
     protected def createAndConfigureJob: Job = {
       // Note: Creating a new Job copies the baseConfiguration. Make sure to use job.getConfiguration from
       // this point on!
-      val hadoopJob = new Job(baseConfiguration, scamrJob.name)
+      val hadoopJob = Job.getInstance(baseConfiguration, scamrJob.name)
       hadoopJob.setJarByClass(scamrJob.mapperClass)
       confModifiers.foreach { _.apply(hadoopJob.getConfiguration) }
       jobModifiers.foreach { _.apply(hadoopJob) }
