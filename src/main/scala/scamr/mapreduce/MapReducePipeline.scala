@@ -3,8 +3,8 @@ package scamr.mapreduce
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
-import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
-import scamr.io.{InputOutputUtils, InputOutput}
+import scamr.conf.{ConfModifier, ConfOrJobModifier, JobModifier}
+import scamr.io.{InputOutput, InputOutputUtils}
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
   def execute(): Boolean = pipeline.execute()
@@ -135,12 +135,18 @@ object MapReducePipeline {
       if (!result) return false
 
       val job = createAndConfigureJob
-      result = job.waitForCompletion(true)
-      // Tell our Source that the input has been read, and whether we succeeded or not
-      // Tell our Sink that the output has been written, and whether we succeeded or not
-      prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
-      next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, result)
-      result
+      try {
+        result = job.waitForCompletion(true)
+        // Tell our Source that the input has been read, and whether we succeeded or not
+        // Tell our Sink that the output has been written, and whether we succeeded or not
+        prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
+        next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, result)
+        result
+      } finally {
+        if (job.getCluster != null) {
+          job.getCluster.close()
+        }
+      }
     }
 
     // Configures this stage
