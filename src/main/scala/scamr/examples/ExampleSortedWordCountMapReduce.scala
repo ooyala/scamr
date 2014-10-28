@@ -4,7 +4,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.{NullWritable, LongWritable, Text}
 import org.apache.hadoop.mapreduce.{ReduceContext, MapContext}
 import scamr.MapReduceMain
-import scamr.conf.{LambdaJobModifier, ConfigureSpeculativeExecution}
+import scamr.conf.{OnJobCompletion, LambdaJobModifier, ConfigureSpeculativeExecution}
 import scamr.io.InputOutput
 import scamr.io.tuples.Tuple2WritableComparable
 import scamr.mapreduce.mapper.SimpleMapper
@@ -39,15 +39,20 @@ object ExampleSortedWordCountMapReduce extends MapReduceMain {
   override def run(conf: Configuration, args: Array[String]): Int = {
     val inputDirs = args.init
     val outputDir = args.last
+    val logJobResultCallback = OnJobCompletion {
+      case (job, Right(true)) => logger.info(s"MR Job ${job.getJobName} succeeded")
+      case (job, _) => logger.info(s"MR Job ${job.getJobName} failed")
+    }
+
     val pipeline = MapReducePipeline.init(conf) -->  // hint: start by adding a data source with -->
       new InputOutput.TextFileSource(inputDirs) --> // hint: use --> to direct data into or out of a stage
       new MapReduceJob(classOf[WordCountMapper], classOf[WordCountReducer], classOf[WordCountReducer],
         "ScaMR sorted word count example, stage 1") ++
       // hint: use ++ to add ConfModifiers or JobModifiers to a TaskStage or a StandAloneJob
-      ConfigureSpeculativeExecution(false, false) ++
+      ConfigureSpeculativeExecution(false, false) ++ logJobResultCallback ++
       LambdaJobModifier { _.setNumReduceTasks(1) } --> // hint: use --> to chain MR jobs into pipelines
       new MapReduceJob(classOf[CombineCountAndWordIntoTupleMapper], classOf[OutputSortedCountsReducer],
-        "ScaMR sorted word count example, stage 2") -->
+        "ScaMR sorted word count example, stage 2") ++ logJobResultCallback -->
       new InputOutput.TextFileSink[Text, LongWritable](outputDir)
     if (pipeline.execute) 0 else 1
   }

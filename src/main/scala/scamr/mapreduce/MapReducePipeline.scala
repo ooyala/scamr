@@ -3,7 +3,7 @@ package scamr.mapreduce
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
-import scamr.conf.{ConfModifier, ConfOrJobModifier, JobModifier}
+import scamr.conf.{OnJobCompletion, ConfModifier, ConfOrJobModifier, JobModifier}
 import scamr.io.{InputOutput, InputOutputUtils}
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
@@ -88,6 +88,21 @@ object MapReducePipeline {
 
     protected var confModifiers: List[ConfModifier] = List()
     protected var jobModifiers: List[JobModifier] = List()
+    protected var jobCallbacks: Vector[OnJobCompletion] = Vector()
+
+    // Default job callbacks which notify our source and sink that all output has been read / written.
+    jobCallbacks :+ OnJobCompletion {
+      case (job, Right(success)) =>
+        prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, success)
+        if (next != null) {
+          next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, success)
+        }
+      case (job, Left(error)) =>
+        prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, false)
+        if (next != null) {
+          next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, false)
+        }
+    }
 
     val workingDir: Path = InputOutputUtils.randomWorkingDir(new Path("tmp"), scamrJob.name)
 
@@ -129,6 +144,11 @@ object MapReducePipeline {
       this
     }
 
+    def ++(callback: OnJobCompletion): JobStage[K1, V1, K2, V2] = {
+      jobCallbacks = jobCallbacks :+ callback
+      this
+    }
+
     override def execute(): Boolean = {
       var result = prev.execute()
       // TODO(ivmaykov): Throw an exception?
@@ -137,11 +157,12 @@ object MapReducePipeline {
       val job = createAndConfigureJob
       try {
         result = job.waitForCompletion(true)
-        // Tell our Source that the input has been read, and whether we succeeded or not
-        // Tell our Sink that the output has been written, and whether we succeeded or not
-        prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
-        next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, result)
+        jobCallbacks.foreach { cb => cb(job, Right(result)) }
         result
+      } catch {
+        case e: Throwable =>
+          jobCallbacks.foreach { cb => cb(job, Left(e)) }
+          throw e
       } finally {
         if (job.getCluster != null) {
           job.getCluster.close()
