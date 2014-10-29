@@ -66,10 +66,7 @@ object MetadataWriter {
 
     } finally {
       // Ensure OutputStream is closed
-      outputStreamOption match {
-        case Some(outputStream) => outputStream.close()
-        case _ =>
-      }
+      outputStreamOption.foreach(_.close())
     }
   }
 }
