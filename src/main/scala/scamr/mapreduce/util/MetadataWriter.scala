@@ -9,6 +9,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.apache.log4j.Logger
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import java.io.OutputStream
+import scamr.conf.OnJobSuccess
 
 /** Writes job metadata as json in the hidden file _JobData in the output directory
   *
@@ -21,6 +22,14 @@ object MetadataWriter {
   import scala.collection.JavaConversions._
 
   val logger = Logger.getLogger(this.getClass)
+
+  /** Callback for MetadataWriter
+    *
+    * To use: new MapReduceJob(...) ++ MetadataWriter.callback
+    */
+  val callback = OnJobSuccess { job =>
+    writeMetadata(job)
+  }
 
   /** Write metadata for Job job */
   def writeMetadata(job: Job) {
@@ -69,4 +78,5 @@ object MetadataWriter {
       outputStreamOption.foreach(_.close())
     }
   }
+
 }

@@ -37,8 +37,7 @@ object SimpleMapper {
       val mapperClass = conf.getClass(SimpleMapperClassProperty, null, classOf[SimpleMapper[K1, V1, K2, V2]])
       if (mapperClass == null) {
         throw new RuntimeException(
-          "Cannot resolve concrete subclass of SimpleMapper! Make sure the '%s' property is set!".format(
-            SimpleMapperClassProperty))
+          s"Cannot resolve concrete subclass of SimpleMapper! Make sure the '$SimpleMapperClassProperty' property is set!")
       }
 
       try {
@@ -51,32 +50,31 @@ object SimpleMapper {
         }
       } catch {
         case e: InvocationTargetException =>
-          throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)
+          throw new RuntimeException(s"Error creating SimpleMapper instance: ${e.getMessage}", e)
         case e: InstantiationException =>
-          throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)
+          throw new RuntimeException(s"Error creating SimpleMapper instance: ${e.getMessage}", e)
         case e: IllegalAccessException =>
-          throw new RuntimeException("Error creating SimpleMapper instance: " + e.getMessage, e)
+          throw new RuntimeException(s"Error creating SimpleMapper instance: ${e.getMessage}", e)
       }
     }
 
     private def createInjectable(context: Mapper[K1, V1, K2, V2]#Context,
                                  clazz: Class[_ <: SimpleMapper[K1, V1, K2, V2]]): SimpleMapper[K1, V1, K2, V2] = {
-      require(classOf[Injectable].isAssignableFrom(clazz), "Must extend the Injectable trait: " + clazz.getName)
+      require(classOf[Injectable].isAssignableFrom(clazz), s"Must extend the Injectable trait: ${clazz.getName}")
 
       val conf = context.getConfiguration
       val bindingModuleClass = conf.getClass(BindingModuleClassProperty, null, classOf[BindingModule])
       if (bindingModuleClass == null) {
         throw new RuntimeException(
-          "Cannot resolve SubCut binding module! Make sure the '%s' property is set!".format(
-            BindingModuleClassProperty))
+          s"Cannot resolve SubCut binding module! Make sure the '$BindingModuleClassProperty' property is set!")
       }
       val bindingModule = try {
         bindingModuleClass.getField("MODULE$").get(bindingModuleClass).asInstanceOf[BindingModule]
       } catch {
         case e: NoSuchFieldException =>
           throw new RuntimeException("Error creating Injectable SimpleMapper instance. " +
-            "Make sure that the SubCut binding module " + bindingModuleClass.getName +
-            " is a scala 'object', and is not nested inside a class.", e)
+            s"Make sure that the SubCut binding module ${bindingModuleClass.getName} " +
+            "is a scala 'object', and is not nested inside a class.", e)
       }
       val constructor = try {
         clazz.getConstructor(classOf[MapContext[K1, V1, K2, V2]], classOf[BindingModule])

@@ -1,17 +1,18 @@
 package scamr
 
 import org.apache.hadoop.conf.{Configuration, Configured}
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic
+import org.apache.hadoop.mapreduce.{MRConfig, MRJobConfig}
 import org.apache.hadoop.util.{ToolRunner, Tool}
 import org.apache.log4j.Logger
-import scamr.conf.HadoopVersionSpecific
 
 abstract class MapReduceMain extends Configured with Tool {
   val logger = Logger.getLogger(this.getClass)
 
-  def main(args: Array[String]): Unit = try {
+  def main(args: Array[String]): Unit = {
     ToolRunner.run(this, args) match {
       case errorCode if errorCode != 0 =>
-        logger.error("failed with error code: " + errorCode)
+        logger.error(s"failed with error code: ${errorCode}")
         System.exit(errorCode)
       case _ => System.exit(0)
     }
@@ -21,12 +22,9 @@ abstract class MapReduceMain extends Configured with Tool {
     val configuration = getConf
     val isLocalMode = configuration.getBoolean("scamr.local.mode", false)
     if (isLocalMode) {
-      configuration.set("mapred.job.tracker", "local")
-      configuration.set(HadoopVersionSpecific.ConfKeys.DefaultFilesystem, "file:///")
-      configuration.get("mapreduce.framework.name", "") match {
-        case str if str.nonEmpty => configuration.set("mapreduce.framework.name", "local")
-        case _ =>
-      }
+      configuration.set(MRConfig.MASTER_ADDRESS, "local")
+      configuration.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY, "file:///")
+      configuration.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME)
     }
     run(configuration, args)
   }

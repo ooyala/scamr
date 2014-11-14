@@ -32,5 +32,5 @@ class NullCompressionCodec extends CompressionCodec {
   def getDefaultExtension: String = notImplemented("getDefaultExtension")
 
   private def notImplemented(methodName: String) =
-    throw new UnsupportedOperationException("%s not implemented!".format(methodName))
+    throw new UnsupportedOperationException(s"$methodName not implemented!")
 }

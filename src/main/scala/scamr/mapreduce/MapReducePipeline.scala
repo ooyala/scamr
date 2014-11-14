@@ -1,17 +1,12 @@
 package scamr.mapreduce
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileUtil, FileSystem, Path}
-import org.apache.hadoop.mapreduce.{Counter, CounterGroup, Job}
-import scamr.conf.{ConfOrJobModifier, JobModifier, ConfModifier}
 import scamr.io.InputOutput.FileLink
-import scamr.io.{InputOutputUtils, InputOutput}
 import org.apache.log4j.Logger
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
-import com.lambdaworks.jacks.JacksMapper
-import scala.collection.mutable
-import scamr.mapreduce.util.MetadataWriter
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapreduce.Job
+import scamr.conf.{OnJobCompletion, ConfModifier, ConfOrJobModifier, JobModifier}
+import scamr.io.{InputOutput, InputOutputUtils}
 
 class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutable) {
   def execute(): Boolean = pipeline.execute()
@@ -100,6 +95,21 @@ object MapReducePipeline {
 
     protected var confModifiers: List[ConfModifier] = List()
     protected var jobModifiers: List[JobModifier] = List()
+    protected var jobCallbacks: Vector[OnJobCompletion] = Vector()
+
+    // Default job callbacks which notify our source and sink that all output has been read / written.
+    jobCallbacks :+ OnJobCompletion {
+      case (job, Right(success)) =>
+        prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, success)
+        if (next != null) {
+          next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, success)
+        }
+      case (job, Left(error)) =>
+        prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, false)
+        if (next != null) {
+          next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, false)
+        }
+    }
 
     val workingDir: Path = InputOutputUtils.randomWorkingDir(new Path("tmp"), scamrJob.name)
 
@@ -135,9 +145,14 @@ object MapReducePipeline {
         modifier match {
           case confModifier: ConfModifier => confModifiers = confModifier :: confModifiers
           case jobModifier: JobModifier => jobModifiers = jobModifier :: jobModifiers
-          case _ => throw new IllegalArgumentException("Invalid modifier class: " + modifier.getClass.toString)
+          case _ => throw new IllegalArgumentException(s"Invalid modifier class: ${modifier.getClass}")
         }
       }
+      this
+    }
+
+    def ++(callback: OnJobCompletion): JobStage[K1, V1, K2, V2] = {
+      jobCallbacks = jobCallbacks :+ callback
       this
     }
 
@@ -147,20 +162,26 @@ object MapReducePipeline {
       if (!result) return false
 
       val job = createAndConfigureJob
-      result = job.waitForCompletion(true)
-
-      // Tell our Source that the input has been read, and whether we succeeded or not
-      // Tell our Sink that the output has been written, and whether we succeeded or not
-      prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
-      next.asInstanceOf[SinkLike[K2, V2]].sink.onOutputWritten(job, result)
-      result
+      try {
+        result = job.waitForCompletion(true)
+        jobCallbacks.foreach { cb => cb(job, Right(result)) }
+        result
+      } catch {
+        case e: Throwable =>
+          jobCallbacks.foreach { cb => cb(job, Left(e)) }
+          throw e
+      } finally {
+        if (job.getCluster != null) {
+          job.getCluster.close()
+        }
+      }
     }
 
     // Configures this stage
     protected def createAndConfigureJob: Job = {
       // Note: Creating a new Job copies the baseConfiguration. Make sure to use job.getConfiguration from
       // this point on!
-      val hadoopJob = new Job(baseConfiguration, scamrJob.name)
+      val hadoopJob = Job.getInstance(baseConfiguration, scamrJob.name)
       hadoopJob.setJarByClass(scamrJob.mapperClass)
       confModifiers.foreach { _.apply(hadoopJob.getConfiguration) }
       jobModifiers.foreach { _.apply(hadoopJob) }

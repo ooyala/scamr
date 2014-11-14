@@ -26,7 +26,8 @@ object InputOutputUtils {
       case "" | null => ""
       case _ => jobName.replaceAll("\\s+", "_").replaceAll("\\W+", "") + "-"
     }
-    val randomDirName = new Path((System.getenv("USER") + "-" + now + "-" + sanitizedName + randomLong).toLowerCase)
+    val userName = System.getenv("USER")
+    val randomDirName = new Path(s"$userName-$now-$sanitizedName-$randomLong".toLowerCase)
     new Path(prefix, randomDirName)
   }
 
@@ -42,10 +43,10 @@ object InputOutputUtils {
 
   def listRecursive(rootPath: Path, fs: FileSystem, filter: PathFilter, maxDepth: Int): Array[FileStatus] = {
     var fileStati = mutable.Buffer[FileStatus]()
-    if (!fs.getFileStatus(rootPath).isDir) {
-      throw new IOException("Root path is not a directory: " + rootPath.toUri.toString)
+    if (!fs.getFileStatus(rootPath).isDirectory) {
+      throw new IOException(s"Root path is not a directory: ${rootPath.toUri}")
     }
-    var (nextDirs, nextFiles) = fs.listStatus(Array(fullyQualifiedPath(rootPath, fs)), filter).partition { _.isDir }
+    var (nextDirs, nextFiles) = fs.listStatus(Array(fullyQualifiedPath(rootPath, fs)), filter).partition { _.isDirectory }
 
     var curDepth = 0
     while (nextDirs.nonEmpty) {
@@ -53,7 +54,7 @@ object InputOutputUtils {
       fileStati ++= nextDirs
       curDepth += 1
       if (maxDepth < 0 || curDepth <= maxDepth) {
-        val (nextDirs2, nextFiles2) = fs.listStatus(nextDirs.map { _.getPath }, filter).partition { _.isDir }
+        val (nextDirs2, nextFiles2) = fs.listStatus(nextDirs.map { _.getPath }, filter).partition { _.isDirectory }
         nextDirs = nextDirs2
         nextFiles = nextFiles2
       } else {
@@ -72,5 +73,5 @@ object InputOutputUtils {
 
   def fullyQualifiedPath(path: String, fs: FileSystem): Path = fullyQualifiedPath(new Path(path), fs)
 
-  def fullyQualifiedPath(path: Path, fs: FileSystem): Path = path.makeQualified(fs)
+  def fullyQualifiedPath(path: Path, fs: FileSystem): Path = path.makeQualified(fs.getUri, fs.getWorkingDirectory)
 }

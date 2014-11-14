@@ -1,8 +1,10 @@
 package scamr.conf
 
+import org.apache.hadoop.mapreduce.MRJobConfig
+
 object ConfigureSpeculativeExecution {
   def apply(mapper: Boolean, reducer: Boolean): ConfModifier = LambdaConfModifier { conf =>
-    conf.setBoolean(HadoopVersionSpecific.ConfKeys.SpeculativeMappers, mapper)
-    conf.setBoolean(HadoopVersionSpecific.ConfKeys.SpeculativeReducers, reducer)
+    conf.setBoolean(MRJobConfig.MAP_SPECULATIVE, mapper)
+    conf.setBoolean(MRJobConfig.REDUCE_SPECULATIVE, reducer)
   }
 }

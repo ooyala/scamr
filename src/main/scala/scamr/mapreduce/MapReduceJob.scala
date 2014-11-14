@@ -1,8 +1,8 @@
 package scamr.mapreduce
 
-import org.apache.hadoop.io.compress.{DefaultCodec, CompressionCodec, SnappyCodec}
-import org.apache.hadoop.mapreduce.{Reducer, Mapper, Job}
-import scamr.conf.{HadoopVersionSpecific, ConfModifier, LambdaConfModifier}
+import org.apache.hadoop.io.compress.{CompressionCodec, DefaultCodec, SnappyCodec}
+import org.apache.hadoop.mapreduce.{Job, MRJobConfig, Mapper, Reducer}
+import scamr.conf.{ConfModifier, LambdaConfModifier}
 import scamr.io.NullCompressionCodec
 import scamr.mapreduce.combiner.CombinerDef
 import scamr.mapreduce.mapper.MapperDef
@@ -32,7 +32,7 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
 
   val confModifiers = if (reducerClass != None) {
     LambdaConfModifier { conf =>
-      val defaultCodec = if (HadoopVersionSpecific.isNativeSnappyLoaded(conf)) {
+      val defaultCodec = if (SnappyCodec.isNativeCodeLoaded) {
         // Prefer the SnappyCodec if the Snappy native libraries are loaded ...
         classOf[SnappyCodec]
       } else {
@@ -47,11 +47,10 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
       val codecClass = conf.getClass("scamr.intermediate.compression.codec", defaultCodec, classOf[CompressionCodec])
 
       if (codecClass != classOf[NullCompressionCodec]) {
-        conf.setBoolean(HadoopVersionSpecific.ConfKeys.CompressMapOutput, true)
-        conf.set(HadoopVersionSpecific.ConfKeys.MapOutputCompressionType, "BLOCK")
-        conf.setClass(HadoopVersionSpecific.ConfKeys.MapOutputCompressionCodec, codecClass, classOf[CompressionCodec])
+        conf.setBoolean(MRJobConfig.MAP_OUTPUT_COMPRESS, true)
+        conf.setClass(MRJobConfig.MAP_OUTPUT_COMPRESS_CODEC, codecClass, classOf[CompressionCodec])
       } else {
-        conf.setBoolean("mapred.compress.map.output", false)
+        conf.setBoolean(MRJobConfig.MAP_OUTPUT_COMPRESS, false)
       }
     } :: confMods
   } else {
@@ -67,13 +66,13 @@ class MapReduceJob[K1, V1, K2, V2, K3, V3] protected
 
     if (reducerClass != None) {
       job.setReducerClass(reducerClass.get)
-      job.setMapOutputKeyClass(mapOutputKeyType.erasure.asInstanceOf[Class[K2]])
-      job.setMapOutputValueClass(mapOutputValueType.erasure.asInstanceOf[Class[V2]])
-      job.setOutputKeyClass(outputKeyType.erasure.asInstanceOf[Class[K3]])
-      job.setOutputValueClass(outputValueType.erasure.asInstanceOf[Class[V3]])
+      job.setMapOutputKeyClass(mapOutputKeyType.runtimeClass.asInstanceOf[Class[K2]])
+      job.setMapOutputValueClass(mapOutputValueType.runtimeClass.asInstanceOf[Class[V2]])
+      job.setOutputKeyClass(outputKeyType.runtimeClass.asInstanceOf[Class[K3]])
+      job.setOutputValueClass(outputValueType.runtimeClass.asInstanceOf[Class[V3]])
     } else {
-      job.setOutputKeyClass(mapOutputKeyType.erasure.asInstanceOf[Class[K2]])
-      job.setOutputValueClass(mapOutputValueType.erasure.asInstanceOf[Class[V2]])
+      job.setOutputKeyClass(mapOutputKeyType.runtimeClass.asInstanceOf[Class[K2]])
+      job.setOutputValueClass(mapOutputValueType.runtimeClass.asInstanceOf[Class[V2]])
       job.setNumReduceTasks(0)
     }
 
