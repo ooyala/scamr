@@ -27,7 +27,7 @@ object MetadataWriter {
     var outputStreamOption: Option[OutputStream] = None
     try {
       // Create OutputStream to HDFS file
-      val outputDir = job.getConfiguration.getStrings(FileOutputFormat.OUTDIR)(0)
+      val outputDir = job.getConfiguration.get(FileOutputFormat.OUTDIR)
       val resultFile = new Path(outputDir, "_JobData")
       val fs = FileSystem.get(job.getConfiguration)
       outputStreamOption = Some(fs.create(resultFile))

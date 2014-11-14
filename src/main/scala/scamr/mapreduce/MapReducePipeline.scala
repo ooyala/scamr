@@ -149,11 +149,6 @@ object MapReducePipeline {
       val job = createAndConfigureJob
       result = job.waitForCompletion(true)
 
-      // Keep a copy of the job history in the target directory
-      if (result && job.getConfiguration.getBoolean("scamr.metadata.write", false)) {
-        MetadataWriter.writeMetadata(job)
-      }
-
       // Tell our Source that the input has been read, and whether we succeeded or not
       // Tell our Sink that the output has been written, and whether we succeeded or not
       prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, result)
