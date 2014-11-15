@@ -68,15 +68,6 @@ object InputOutput {
     def this(outputFormatClass: Class[_ <: OutputFormat[K, V]], outputDir: String)
             (implicit km: Manifest[K], vm: Manifest[V]) = this(outputFormatClass, new Path(outputDir))(km, vm)
 
-    // The key and value types must be Writable so they can be written to the job output files.
-    // Unfortunately this check happens at runtime rather than compile time. The reason is that we can't
-    // expect all MR jobs to produce Writable key/value types - some OutputFormats (for example, Cassandra)
-    // take non-Writable key/value types and store them outside of HDFS using their own storage mechanism.
-    // Although this check happens at runtime, at least it happens during the job configuration stage, before
-    // any jobs are launched.
-    mustBeWritable(km, "Key class")
-    mustBeWritable(vm, "Value class")
-
     override def configureOutput(job: Job) {
       super.configureOutput(job)
       FileOutputFormat.setOutputPath(job, outputDir)
@@ -86,11 +77,17 @@ object InputOutput {
   class TextFileSink[K, V](outputDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
   extends FileSink[K, V](classOf[TextOutputFormat[K, V]], outputDir) {
 
+    mustBeWritable(km, "Key class")
+    mustBeWritable(vm, "Value class")
+
     def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) = this(new Path(outputDir))(km, vm)
   }
 
   class SequenceFileSink[K, V](outputDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
   extends FileSink[K, V](classOf[SequenceFileOutputFormat[K, V]], outputDir) {
+
+    mustBeWritable(km, "Key class")
+    mustBeWritable(vm, "Value class")
 
     def this(outputDir: String)(implicit km: Manifest[K], vm: Manifest[V]) = this(new Path(outputDir))(km, vm)
   }
@@ -104,15 +101,6 @@ object InputOutput {
                                 val workingDir: Path)
                                (implicit km: Manifest[K], vm: Manifest[V])
   extends Link[K, V] {
-
-    // The key and value types must be Writable so they can be written to the intermediate sequence files.
-    // Unfortunately this check happens at runtime rather than compile time. The reason is that we can't
-    // expect all MR jobs to produce Writable key/value types - some OutputFormats (for example, Cassandra)
-    // take non-Writable key/value types and store them outside of HDFS using their own storage mechanism.
-    // Although this check happens at runtime, at least it happens during the job configuration stage, before
-    // any jobs are launched.
-    mustBeWritable(km, "Key class")
-    mustBeWritable(vm, "Value class")
 
     override def configureOutput(producerJob: Job) {
       super.configureOutput(producerJob)
@@ -164,7 +152,15 @@ object InputOutput {
   }
 
   class SequenceFileLink[K, V](workingDir: Path)(implicit km: Manifest[K], vm: Manifest[V])
-  extends FileLink[K, V](classOf[SequenceFileOutputFormat[K, V]], classOf[SequenceFileInputFormat[K, V]], workingDir)
+  extends FileLink[K, V](classOf[SequenceFileOutputFormat[K, V]], classOf[SequenceFileInputFormat[K, V]], workingDir) {
+
+    // The key and value types must be Writable so they can be written to the intermediate sequence files.
+    // Unfortunately this check happens at runtime rather than compile time.
+
+    mustBeWritable(km, "Key class")
+    mustBeWritable(vm, "Value class")
+
+  }
 
   def mustBeWritable[T](manifest: Manifest[T], messagePrefix: String) {
     val clazz = manifest.runtimeClass.asInstanceOf[Class[T]]

@@ -1,6 +1,8 @@
 package scamr.mapreduce
 
 import org.apache.hadoop.conf.Configuration
+import scamr.io.InputOutput.FileLink
+import org.apache.log4j.Logger
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
 import scamr.conf.{OnJobCompletion, ConfModifier, ConfOrJobModifier, JobModifier}
@@ -11,6 +13,9 @@ class MapReducePipeline(protected val pipeline: MapReducePipeline.PublicExecutab
 }
 
 object MapReducePipeline {
+
+  import scala.collection.JavaConversions._
+
   trait Stage[K1, V1, K2, V2] {
     val prev: Stage[_, _, _ <: K1, V1]
     var next: Stage[_ >: K2, V2, _, _] = _
@@ -84,6 +89,8 @@ object MapReducePipeline {
                                  override val scamrJob: MapReduceJob[K1, V1, _, _, K2, V2])
                                 (implicit val k2m: Manifest[K2], v2m: Manifest[V2])
   extends Stage[K1, V1, K2, V2] with JobLike[K1, V1, K2, V2] {
+    val logger = Logger.getLogger(this.getClass)
+
     override val baseConfiguration = prev.baseConfiguration
 
     protected var confModifiers: List[ConfModifier] = List()
@@ -116,9 +123,9 @@ object MapReducePipeline {
     // wrapping them in a 0-ary closure.
     def -->(sinkGenerator: () => InputOutput.Sink[K2, V2]): MapReducePipeline = this --> sinkGenerator()
 
-    def -->[K3, V3](nextJob: MapReduceJob[K2, V2, _, _, K3, V3])
+    def -->[K3, V3](nextJob: MapReduceJob[K2, V2, _, _, K3, V3], link: Option[FileLink[K2, V2]] = None)
                    (implicit k3m: Manifest[K3], v3m: Manifest[V3]): JobStage[K2, V2, K3, V3] = {
-      val nextStage = new LinkStage[K2, V2](this, workingDir)(k2m, v2m)
+      val nextStage = new LinkStage[K2, V2](this, workingDir, link)(k2m, v2m)
       this.next = nextStage
       nextStage --> nextJob
     }
@@ -185,12 +192,15 @@ object MapReducePipeline {
     }
   }
 
-  class LinkStage[K, V](previous: Stage[_, _, K, V], val workingDir: Path)
+  class LinkStage[K, V](previous: Stage[_, _, K, V], val workingDir: Path, fileLink: Option[FileLink[K, V]] = None)
                        (implicit km: Manifest[K], vm: Manifest[V])
   extends Stage[K, V, K, V] with SourceLike[K, V] with SinkLike[K, V] {
 
     override val prev = previous.asInstanceOf[Stage[_, _, _ <: K, V]]
-    private val link = new InputOutput.SequenceFileLink[K, V](workingDir)
+    private val link: FileLink[K, V] = fileLink match {
+      case None => new InputOutput.SequenceFileLink[K, V](workingDir)
+      case Some(l) => l
+    }
     override val sink: InputOutput.Sink[K, V] = link
     override val source: InputOutput.Source[K, V] = link
     override val baseConfiguration = prev.baseConfiguration
