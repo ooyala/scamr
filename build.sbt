@@ -18,7 +18,7 @@ resolvers += "Cloudera's CDH3 Maven repo" at "https://repository.cloudera.com/ar
 libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.3",
   "org.joda" % "joda-convert" % "1.5",
-  "com.lambdaworks" %% "jacks" % "2.1.4",
+  "com.lambdaworks" %% "jacks" % "2.3.3",
   // Compiles against Cloudera's CDH5 hadoop distribution.
   // Note: since the hadoop dependency has "provided" scope, users of ScaMR will have to add a
   // CDH5-compatible hadoop-client to their library dependencies.
