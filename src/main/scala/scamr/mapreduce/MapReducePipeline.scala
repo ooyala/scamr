@@ -98,7 +98,7 @@ object MapReducePipeline {
     protected var jobCallbacks: Vector[OnJobCompletion] = Vector()
 
     // Default job callbacks which notify our source and sink that all output has been read / written.
-    jobCallbacks :+ OnJobCompletion {
+    jobCallbacks = jobCallbacks :+ OnJobCompletion {
       case (job, Right(success)) =>
         prev.asInstanceOf[SourceLike[K1, V1]].source.onInputRead(job, success)
         if (next != null) {
