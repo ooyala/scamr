@@ -1,15 +1,17 @@
 package scamr.mapreduce.util
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import java.io.OutputStream
+
 import com.lambdaworks.jacks.JacksMapper
-import scala.collection.mutable
-import org.apache.hadoop.mapreduce.{Job, Counter, CounterGroup}
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
+import org.apache.hadoop.mapreduce.{Counter, CounterGroup, Job}
+import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import org.apache.log4j.Logger
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import java.io.OutputStream
 import scamr.conf.OnJobSuccess
+
+import scala.collection.mutable
 
 /** Writes job metadata as json in the hidden file _JobData in the output directory
   *
@@ -18,6 +20,7 @@ import scamr.conf.OnJobSuccess
   * as a json string.
   */
 object MetadataWriter {
+  val ProvidedMetadataConfKey = "scamr.metadata.provided"
 
   import scala.collection.JavaConversions._
 
@@ -42,14 +45,18 @@ object MetadataWriter {
       outputStreamOption = Some(fs.create(resultFile))
 
       // read provided metadata
-      val providedData = try {
-        job.getConfiguration.getStrings("scamr.metadata.provided").map({ providedMetadata =>
-          JacksMapper.readValue[Map[Any,Any]](providedMetadata)
-        }).reduce( _ ++ _ )
-      } catch {
-        case _: Throwable =>
-          Map[Any, Any]()
-      }
+      val providedDataMap =
+        Option(job.getConfiguration.get(ProvidedMetadataConfKey)) match {
+          case Some(providedMetadata) =>
+            try {
+              JacksMapper.readValue[Map[Any, Any]](providedMetadata)
+            } catch {
+              case e: Throwable =>
+                logger.warn(s"Error parsing provided metadata [$providedMetadata], ignored", e)
+                Map[Any, Any]()
+            }
+          case _ => Map[Any, Any]()
+        }
 
       // Create counter map
       val counters = job.getCounters
@@ -65,7 +72,7 @@ object MetadataWriter {
         "startTime" -> new DateTime(job.getStartTime).toString(ISODateTimeFormat.dateHourMinuteSecond()),
         "finishTime" -> new DateTime(job.getFinishTime).toString(ISODateTimeFormat.dateHourMinuteSecond()),
         "counters" -> counterMap,
-        "provided" -> providedData
+        "provided" -> providedDataMap
       )
       outputStreamOption.get.write(JacksMapper.writeValueAsString(output).getBytes)
 
